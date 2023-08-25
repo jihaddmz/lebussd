@@ -6,8 +6,6 @@ import 'package:flutter_sms/flutter_sms.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
-import 'package:lebussd/models/model_cart.dart';
-import 'package:lebussd/screen_cart.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
@@ -20,7 +18,6 @@ class ScreenHome extends StatefulWidget {
 }
 
 class _ScreenHome extends State<ScreenHome> {
-  int _selectedIndex = 0;
   double _availableUSSD = 0.0;
 
   late StreamSubscription<QuerySnapshot<Map<String, dynamic>>> subscription;
@@ -39,6 +36,10 @@ class _ScreenHome extends State<ScreenHome> {
     }
   }
 
+  /// method for client
+  /// in firestore there is a field responsible for disabling the app for client, incase there is something wrong,
+  /// so listening for changes in this field (enableApp)
+  ///
   void fetchIfAppIsForcedDisable() {
     var before = true;
     final collRef = Singleton().db.collection("app");
@@ -60,6 +61,9 @@ class _ScreenHome extends State<ScreenHome> {
     }, onError: (error) => print("Listen failed: $error"));
   }
 
+  /// method for server
+  /// checking the on device available ussd and set it to firestore, so the client can fetch it
+  ///
   void checkUSSD() async {
     int subscriptionId = 1; // sim card subscription ID
     String code = "*220#"; // ussd code payload
@@ -82,6 +86,9 @@ class _ScreenHome extends State<ScreenHome> {
     } catch (e) {}
   }
 
+  /// method for client side
+  /// auto fetch the number of available ussd in the server phone, and set it to the variable _availableussd
+  ///
   void fetchNumberOfUSSD() async {
     Singleton()
         .db
@@ -99,6 +106,10 @@ class _ScreenHome extends State<ScreenHome> {
     });
   }
 
+  /// method for server phone
+  /// this method is for the server phone that will listen to insertion to docs in firestore in order to
+  /// charge the user
+  ///
   void listen() {
     try {
       debouncedStream = BehaviorSubject<QuerySnapshot>();
@@ -108,7 +119,7 @@ class _ScreenHome extends State<ScreenHome> {
         debouncedStream.add(event);
       }, onError: (error) => print("Listen failed: $error"));
 
-/**using  debouncedStream so we can listen just once for the same change event*/
+      /**using  debouncedStream so we can listen just once for the same change event*/
       debouncedStream
           .debounceTime(Duration(milliseconds: 500))
           .listen((event) async {
@@ -138,6 +149,9 @@ class _ScreenHome extends State<ScreenHome> {
     }
   }
 
+  /// method for server
+  /// charging the client by sending a message to the client phone number ex: 76815643t1
+  ///
   void _sendSMS(
       {required String message,
       required List<String> recipients,
@@ -155,26 +169,6 @@ class _ScreenHome extends State<ScreenHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
-          onTap: (index) {
-            setState(() {
-              if (_selectedIndex != index) {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (BuildContext context) {
-                  if (index == 0) {
-                    return ScreenHome();
-                  } else {
-                    return ScreenCart();
-                  }
-                }));
-              }
-            });
-          },
-          selectedItemColor: primaryColor,
-          unselectedItemColor: Colors.black,
-          items: Singleton().listOfBottomNavItems,
-          currentIndex: _selectedIndex,
-        ),
         appBar: AppBar(
             leading: const Icon(Icons.store),
             title: Text('LebUSSD',
@@ -291,56 +285,31 @@ class _ScreenHome extends State<ScreenHome> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (!modelBundle.isOrdered) {
-                  if (Singleton().isConnected) {
-                    if (modelBundle.bundle <= _availableUSSD + 0.16) {
-                      // card can be charged
-                      Singleton().listOfCart.add(ModelCart(
-                          modelBundle.imagePath,
-                          modelBundle.price,
-                          modelBundle.bundle,
-                          1));
-                      setState(() {
-                        modelBundle.isOrdered = true;
-                      });
-                    } else {
-                      // there is no enough credits to charge
-                      HelperDialog().showDialogInfo(
-                          "Attention!",
-                          "There is no enough USSDs, please try again later, or try lower bundles.",
-                          context,
-                          true, () {
-                        Navigator.pop(context);
-                      });
-                    }
+                if (Singleton().isConnected) {
+                  if (modelBundle.bundle <= _availableUSSD + 0.16) {
+                    // todo card can be charged
+                  } else {
+                    // there is no enough credits to charge
+                    HelperDialog().showDialogInfo(
+                        "Attention!",
+                        "There is no enough USSDs, please try again later, or try lower bundles.",
+                        context,
+                        true, () {
+                      Navigator.pop(context);
+                    });
                   }
-                } else {
-                  null;
                 }
               },
-              style: !modelBundle.isOrdered
-                  ? ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.white),
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(primaryColor),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
-                          ContinuousRectangleBorder(
-                              borderRadius: BorderRadius.circular(50))),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                          Size(MediaQuery.of(context).size.width - 50, 50)),
-                    )
-                  : ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.black),
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(secondaryColor),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
-                          ContinuousRectangleBorder(
-                              borderRadius: BorderRadius.circular(50))),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                          Size(MediaQuery.of(context).size.width - 50, 50)),
-                    ),
+              style: ButtonStyle(
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(primaryColor),
+                shape: MaterialStateProperty.all<OutlinedBorder>(
+                    ContinuousRectangleBorder(
+                        borderRadius: BorderRadius.circular(50))),
+                minimumSize: MaterialStateProperty.all<Size>(
+                    Size(MediaQuery.of(context).size.width - 50, 50)),
+              ),
               child: Text(
                 "Pay \$${modelBundle.price} + \$0.16 Transfer Fee",
                 style: const TextStyle(fontSize: 17),
