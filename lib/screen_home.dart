@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class _ScreenHome extends State<ScreenHome> {
   _ScreenHome() {
     // if (Singleton().firebaseAuth.currentUser!.phoneNumber ==
     //     Singleton().serverPhoneNubmer) {
-    if (false) {
+      if (false) {
       // it is the server phone number
       checkUSSD();
       listen();
@@ -47,7 +48,7 @@ class _ScreenHome extends State<ScreenHome> {
       if (event.docs[0].get('enableApp') == false) {
         HelperDialog().showDialogInfo(
             "Attention!",
-            "App is disabled, please wait till the app is re-enabled!!",
+            "Sorry something is wrong, were working on solving it, please stand by!!",
             context,
             false,
             () {});
@@ -57,7 +58,6 @@ class _ScreenHome extends State<ScreenHome> {
           Navigator.pop(context);
         }
       }
-      Helpers.logD("${event.docs[0].get('enableApp')}");
     }, onError: (error) => print("Listen failed: $error"));
   }
 
@@ -108,45 +108,46 @@ class _ScreenHome extends State<ScreenHome> {
 
   /// method for server phone
   /// this method is for the server phone that will listen to insertion to docs in firestore in order to
-  /// charge the user
+  /// send ussd charge for the user
   ///
-  void listen() {
-    try {
-      debouncedStream = BehaviorSubject<QuerySnapshot>();
-
+  void listen() async {
+    Future.delayed(const Duration(seconds: 1), () {
       final collRef = Singleton().db.collection("requests");
-      subscription = collRef.snapshots().listen((event) async {
-        debouncedStream.add(event);
-      }, onError: (error) => print("Listen failed: $error"));
-
-      /**using  debouncedStream so we can listen just once for the same change event*/
-      debouncedStream
-          .debounceTime(Duration(milliseconds: 500))
-          .listen((event) async {
-        if (event.docChanges.length > 0) {
-          if (event.docChanges[0].type == DocumentChangeType.added) {
-            if (!subscription.isPaused) {
-              Helpers.logD(' phoneNumber ${event.docs[0].get('phoneNumber')}');
-              _sendSMS(
-                  message: "Hi",
-                  recipients: [event.docs[0].get('phoneNumber')],
-                  whenComplete: () async {
-                    checkUSSD(); // here we re-check the ussd available in the phone and send it to firebase
-                    subscription
-                        .pause(); // pausing the listener so the deletion happen successfully
-
-                    await Singleton().db.runTransaction((transaction) async {
-                      transaction.delete(event.docs[0].reference);
-                    }).then((value) => {subscription.resume()});
-                  },
-                  whenError: () {});
-            }
-          }
+      collRef.get().then((value) async {
+        if (value.docs.isNotEmpty) {
+          _sendSMS(
+              message:
+                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+              recipients: const ["1199"],
+              whenComplete: () async {
+                checkUSSD();
+                await Singleton().db.runTransaction((transaction) async {
+                  transaction.delete(value.docs[0].reference);
+                }).then((value) => {listen()});
+              },
+              whenError: () {
+                listen();
+              });
+          Helpers.logD("data ${value.docs[0].get("phoneNumber")}");
+        } else {
+          listen();
         }
+      }, onError: (e) {
+        Helpers.logD("error furestore $e");
+        listen();
       });
-    } catch (e) {
-      Helpers.logD("error is ${e}");
-    }
+    });
+  }
+
+  /// method for client
+  /// executed on pay btn click, send bundle charge request to the server phone through firebase
+  ///
+  void sendChargeRequest(ModelBundle modelBundle) {
+    Map<String, dynamic> data = HashMap();
+    data["phoneNumber"] = 76815643;
+    data["bundle"] = modelBundle.bundle;
+    var collRef = Singleton().db.collection("requests");
+    collRef.doc().set(data, SetOptions(merge: true));
   }
 
   /// method for server
@@ -271,22 +272,14 @@ class _ScreenHome extends State<ScreenHome> {
                   image: AssetImage(modelBundle.imagePath),
                   fit: BoxFit.fill,
                 )),
-            const Text('Excluding Taxes'),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("\$${modelBundle.price}"),
-                const Text(" / "),
-                Text(
-                  "${modelBundle.bundle}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                )
-              ],
-            ),
+            Padding(
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+                child: Text('USSD Bundle: ${modelBundle.bundle}')),
             ElevatedButton(
               onPressed: () {
                 if (Singleton().isConnected) {
                   if (modelBundle.bundle <= _availableUSSD + 0.16) {
+                    sendChargeRequest(modelBundle);
                     // todo card can be charged
                   } else {
                     // there is no enough credits to charge
@@ -298,12 +291,19 @@ class _ScreenHome extends State<ScreenHome> {
                       Navigator.pop(context);
                     });
                   }
+                } else { // no network access found
+                  HelperDialog().showDialogInfo(
+                      "Attention!",
+                      "You don't have network access, please try again when you have network access.",
+                      context,
+                      true, () {
+                    Navigator.pop(context);
+                  });
                 }
               },
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                backgroundColor:
-                    MaterialStateProperty.all<Color>(primaryColor),
+                backgroundColor: MaterialStateProperty.all<Color>(primaryColor),
                 shape: MaterialStateProperty.all<OutlinedBorder>(
                     ContinuousRectangleBorder(
                         borderRadius: BorderRadius.circular(50))),
@@ -312,7 +312,7 @@ class _ScreenHome extends State<ScreenHome> {
               ),
               child: Text(
                 "Pay \$${modelBundle.price} + \$0.16 Transfer Fee",
-                style: const TextStyle(fontSize: 17),
+                style: const TextStyle(fontSize: 15),
               ),
             )
           ],

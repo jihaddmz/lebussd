@@ -26,10 +26,6 @@ class Singleton {
     ModelBundle('images/img_2.5.png', 3, 2.5),
     ModelBundle('images/img_3.png', 3.6, 3)
   ];
-  List<BottomNavigationBarItem> listOfBottomNavItems = [
-    const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-    const BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Cart'),
-  ];
   late String phoneNumber;
   bool isConnected = true;
 }

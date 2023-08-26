@@ -4,6 +4,7 @@ class HelperDialog {
   void showDialogInfo(String title, String content, BuildContext context,
       bool showOKBtn, Function onPressed) {
     showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
@@ -16,7 +17,7 @@ class HelperDialog {
                       onPressed: () {
                         onPressed();
                       },
-                      child: const Text('OK')))
+                      child: const Text('OK', style: TextStyle(fontSize: 15))))
             ],
           );
         });
