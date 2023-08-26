@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sms/flutter_sms.dart';
+import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
@@ -20,14 +21,20 @@ class ScreenHome extends StatefulWidget {
 
 class _ScreenHome extends State<ScreenHome> {
   double _availableUSSD = 0.0;
+  late String? _carrier;
 
   late StreamSubscription<QuerySnapshot<Map<String, dynamic>>> subscription;
   late BehaviorSubject<QuerySnapshot> debouncedStream;
 
   _ScreenHome() {
+    HelperSharedPreferences.getString("carrier").then((value) => {
+          setState(() {
+            _carrier = value;
+          })
+        });
     // if (Singleton().firebaseAuth.currentUser!.phoneNumber ==
     //     Singleton().serverPhoneNubmer) {
-      if (false) {
+    if (false) {
       // it is the server phone number
       checkUSSD();
       listen();
@@ -169,6 +176,7 @@ class _ScreenHome extends State<ScreenHome> {
 
   @override
   Widget build(BuildContext context) {
+    Helpers.logD("value ${_carrier}");
     return Scaffold(
         appBar: AppBar(
             leading: const Icon(Icons.store),
@@ -217,6 +225,12 @@ class _ScreenHome extends State<ScreenHome> {
                       ],
                     ),
                   ),
+                  Visibility(
+                      visible: _carrier == "Alpha",
+                      child: const Text(
+                        "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
+                        style: TextStyle(color: Colors.grey),
+                      )),
                   Padding(
                     padding: const EdgeInsets.only(top: 50),
                     child: Text(
@@ -276,40 +290,62 @@ class _ScreenHome extends State<ScreenHome> {
                 padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
                 child: Text('USSD Bundle: ${modelBundle.bundle}')),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                if (_carrier == "Alpha") return;
                 if (Singleton().isConnected) {
-                  if (modelBundle.bundle <= _availableUSSD + 0.16) {
-                    sendChargeRequest(modelBundle);
-                    // todo card can be charged
+                  if (await Helpers.requestPermissions(context)) {
+                    if (modelBundle.bundle <= _availableUSSD + 0.16) {
+                      sendChargeRequest(modelBundle);
+                      // todo card can be charged
+                    } else {
+                      // there is no enough credits to charge
+                      if (context.mounted) {
+                        HelperDialog().showDialogInfo(
+                            "Attention!",
+                            "There is no enough USSDs, please try again later, or try lower bundles.",
+                            context,
+                            true, () {
+                          Navigator.pop(context);
+                        });
+                      }
+                    }
                   } else {
-                    // there is no enough credits to charge
-                    HelperDialog().showDialogInfo(
-                        "Attention!",
-                        "There is no enough USSDs, please try again later, or try lower bundles.",
-                        context,
-                        true, () {
-                      Navigator.pop(context);
-                    });
+                    // no network access found
+                    if (context.mounted) {
+                      HelperDialog().showDialogInfo(
+                          "Attention!",
+                          "You don't have network access, please try again when you have network access.",
+                          context,
+                          true, () {
+                        Navigator.pop(context);
+                      });
+                    }
                   }
-                } else { // no network access found
-                  HelperDialog().showDialogInfo(
-                      "Attention!",
-                      "You don't have network access, please try again when you have network access.",
-                      context,
-                      true, () {
-                    Navigator.pop(context);
-                  });
                 }
               },
-              style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                backgroundColor: MaterialStateProperty.all<Color>(primaryColor),
-                shape: MaterialStateProperty.all<OutlinedBorder>(
-                    ContinuousRectangleBorder(
-                        borderRadius: BorderRadius.circular(50))),
-                minimumSize: MaterialStateProperty.all<Size>(
-                    Size(MediaQuery.of(context).size.width - 50, 50)),
-              ),
+              style: _carrier == "Touch"
+                  ? ButtonStyle(
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.white),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(primaryColor),
+                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                          ContinuousRectangleBorder(
+                              borderRadius: BorderRadius.circular(50))),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                          Size(MediaQuery.of(context).size.width - 50, 50)),
+                    )
+                  : ButtonStyle(
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.black),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(secondaryColor),
+                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                          ContinuousRectangleBorder(
+                              borderRadius: BorderRadius.circular(50))),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                          Size(MediaQuery.of(context).size.width - 50, 50)),
+                    ),
               child: Text(
                 "Pay \$${modelBundle.price} + \$0.16 Transfer Fee",
                 style: const TextStyle(fontSize: 15),

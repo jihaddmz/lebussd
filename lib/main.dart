@@ -8,7 +8,6 @@ import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:path_provider_android/path_provider_android.dart';
-import 'package:rxdart/rxdart.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 
