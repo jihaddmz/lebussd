@@ -107,6 +107,11 @@ class _SigninPage extends State<SigninPage> {
                 onPressed: () {
                   if (_isButtonDisabled) return;
 
+                  if (!Singleton().isConnected) {
+                    HelperDialog().showDialogInfo("Attention", "No network access, please connect and try again.", context, true, (){Navigator.pop(context);});
+                    return;
+                  }
+
                   if (_isCodeSent) {
                     // if the button is for verifying verification code
                     if (_controllerCode.text.trim().length == 0) {

@@ -23,13 +23,10 @@ class ScreenHome extends StatefulWidget {
 class _ScreenHome extends State<ScreenHome> {
   double _availableUSSD = 0.0;
   String _carrier = "Touch";
-
-  late StreamSubscription<QuerySnapshot<Map<String, dynamic>>> subscription;
-  late BehaviorSubject<QuerySnapshot> debouncedStream;
+  String _error = "";
 
   _ScreenHome() {
-    // if (Singleton().firebaseAuth.currentUser!.phoneNumber ==
-    //     Singleton().serverPhoneNubmer) {
+    // if (!isClientPhone()) {
     if (false) {
       // it is the server phone number
       checkUSSD();
@@ -90,6 +87,9 @@ class _ScreenHome extends State<ScreenHome> {
         _availableUSSD = double.parse(onDeviceUSSD);
       });
     } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
       if (onResponseError != null) onResponseError();
     }
   }
@@ -133,15 +133,19 @@ class _ScreenHome extends State<ScreenHome> {
                   transaction.delete(value.docs[0].reference);
                 }).then((value) => {listen()});
               },
-              whenError: () {
+              whenError: (onError) {
+                setState(() {
+                  _error = onError.toString();
+                });
                 listen();
               });
-          Helpers.logD("data ${value.docs[0].get("phoneNumber")}");
         } else {
           listen();
         }
       }, onError: (e) {
-        Helpers.logD("error furestore $e");
+        setState(() {
+          _error = e.toString();
+        });
         listen();
       });
     });
@@ -165,14 +169,23 @@ class _ScreenHome extends State<ScreenHome> {
       {required String message,
       required List<String> recipients,
       required Function whenComplete,
-      required Function whenError}) async {
+      required Function(dynamic) whenError}) async {
     String _result = await sendSMS(
             message: message, recipients: recipients, sendDirect: true)
         .catchError((onError) {
-      whenError();
+      whenError(onError);
     }).whenComplete(() {
       whenComplete();
     });
+  }
+
+  ///
+  /// method to check if this device is a client or the server phone
+  ///
+  bool isClientPhone() {
+    // return Singleton().firebaseAuth.currentUser!.phoneNumber !=
+    //     Singleton().serverPhoneNubmer;
+    return true;
   }
 
   @override
@@ -274,42 +287,56 @@ class _ScreenHome extends State<ScreenHome> {
                         "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
                         style: TextStyle(color: Colors.grey),
                       )),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 50),
-                    child: Text(
-                      'USSD Bundles:',
-                      style: Theme.of(context).textTheme.labelMedium,
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20),
-                    child: Column(
-                      children: [
-                        item(Singleton().listOfBundle[0]),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30),
-                          child: item(Singleton().listOfBundle[1]),
+                  Visibility(
+                      visible: !isClientPhone(),
+                      child: SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          child: Center(
+                              child: Text(
+                            _error,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.displayLarge,
+                          )))),
+                  Visibility(
+                      visible: isClientPhone(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 50),
+                        child: Text(
+                          'USSD Bundles:',
+                          style: Theme.of(context).textTheme.labelMedium,
+                          textAlign: TextAlign.left,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30),
-                          child: item(Singleton().listOfBundle[2]),
+                      )),
+                  Visibility(
+                      visible: isClientPhone(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Column(
+                          children: [
+                            item(Singleton().listOfBundle[0]),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: item(Singleton().listOfBundle[1]),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: item(Singleton().listOfBundle[2]),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: item(Singleton().listOfBundle[3]),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: item(Singleton().listOfBundle[4]),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: item(Singleton().listOfBundle[5]),
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30),
-                          child: item(Singleton().listOfBundle[3]),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30),
-                          child: item(Singleton().listOfBundle[4]),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30),
-                          child: item(Singleton().listOfBundle[5]),
-                        ),
-                      ],
-                    ),
-                  )
+                      ))
                 ],
               )),
         ));
@@ -402,8 +429,6 @@ class _ScreenHome extends State<ScreenHome> {
 
   @override
   void dispose() {
-    subscription.cancel();
-    debouncedStream.close();
     super.dispose();
   }
 }
