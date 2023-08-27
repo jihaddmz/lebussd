@@ -8,6 +8,7 @@ import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
+import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
@@ -21,17 +22,12 @@ class ScreenHome extends StatefulWidget {
 
 class _ScreenHome extends State<ScreenHome> {
   double _availableUSSD = 0.0;
-  late String? _carrier;
+  String _carrier = "Touch";
 
   late StreamSubscription<QuerySnapshot<Map<String, dynamic>>> subscription;
   late BehaviorSubject<QuerySnapshot> debouncedStream;
 
   _ScreenHome() {
-    HelperSharedPreferences.getString("carrier").then((value) => {
-          setState(() {
-            _carrier = value;
-          })
-        });
     // if (Singleton().firebaseAuth.currentUser!.phoneNumber ==
     //     Singleton().serverPhoneNubmer) {
     if (false) {
@@ -71,15 +67,18 @@ class _ScreenHome extends State<ScreenHome> {
   /// method for server
   /// checking the on device available ussd and set it to firestore, so the client can fetch it
   ///
-  void checkUSSD() async {
+  void checkUSSD(
+      {Function(String)? onResponseResult, Function? onResponseError}) async {
     int subscriptionId = 1; // sim card subscription ID
     String code = "*220#"; // ussd code payload
     try {
       String ussdResponseMessage = await UssdService.makeRequest(
         subscriptionId,
         code,
-        Duration(seconds: 10), // timeout (optional) - default is 10 seconds
+        const Duration(
+            seconds: 10), // timeout (optional) - default is 10 seconds
       );
+      if (onResponseResult != null) onResponseResult(ussdResponseMessage);
       String onDeviceUSSD = ussdResponseMessage.split(" ")[1];
       Singleton()
           .db
@@ -90,7 +89,9 @@ class _ScreenHome extends State<ScreenHome> {
       setState(() {
         _availableUSSD = double.parse(onDeviceUSSD);
       });
-    } catch (e) {}
+    } catch (e) {
+      if (onResponseError != null) onResponseError();
+    }
   }
 
   /// method for client side
@@ -176,12 +177,54 @@ class _ScreenHome extends State<ScreenHome> {
 
   @override
   Widget build(BuildContext context) {
-    Helpers.logD("value ${_carrier}");
+    HelperSharedPreferences.getString("carrier").then((value) => {
+          setState(() {
+            _carrier = value ?? "";
+          })
+        });
+
     return Scaffold(
         appBar: AppBar(
-            leading: const Icon(Icons.store),
-            title: Text('LebUSSD',
-                style: Theme.of(context).textTheme.displayLarge)),
+          leading: const Icon(Icons.store),
+          title:
+              Text('LebUSSD', style: Theme.of(context).textTheme.displayLarge),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  HelperDialog().showDialogAffirmation(
+                      context, "Attention", "Are you sure you want to logout?",
+                      () {
+                    Singleton().firebaseAuth.signOut();
+                    Navigator.pop(context);
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (context) => ScreenWelcome()),
+                        (route) => false);
+                  }, () {
+                    Navigator.pop(context);
+                  });
+                },
+                icon: const Icon(Icons.logout)),
+            IconButton(
+                onPressed: () async {
+                  if (await Helpers.requestPhonePermission(context)) {
+                    if (context.mounted) {
+                      HelperDialog().showLoaderDialog(context);
+                      checkUSSD(onResponseResult: (result) {
+                        Navigator.pop(context);
+                        HelperDialog()
+                            .showDialogInfo(null, result, context, true, () {
+                          Navigator.pop(context);
+                        });
+                      }, onResponseError: () {
+                        Navigator.pop(context);
+                      });
+                    }
+                  }
+                },
+                icon: const Icon(Icons.phone))
+          ],
+        ),
         body: SingleChildScrollView(
           child: Padding(
               padding: const EdgeInsets.all(20),
@@ -226,7 +269,7 @@ class _ScreenHome extends State<ScreenHome> {
                     ),
                   ),
                   Visibility(
-                      visible: _carrier == "Alpha",
+                      visible: _carrier != "Touch",
                       child: const Text(
                         "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
                         style: TextStyle(color: Colors.grey),
@@ -291,9 +334,9 @@ class _ScreenHome extends State<ScreenHome> {
                 child: Text('USSD Bundle: ${modelBundle.bundle}')),
             ElevatedButton(
               onPressed: () async {
-                if (_carrier == "Alpha") return;
-                if (Singleton().isConnected) {
-                  if (await Helpers.requestPermissions(context)) {
+                if (_carrier != "Touch") return;
+                if (await Helpers.requestSMSPermission(context)) {
+                  if (Singleton().isConnected) {
                     if (modelBundle.bundle <= _availableUSSD + 0.16) {
                       sendChargeRequest(modelBundle);
                       // todo card can be charged
