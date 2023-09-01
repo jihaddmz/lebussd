@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sms/flutter_sms.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
+import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/screen_welcome.dart';
@@ -350,12 +351,13 @@ class _ScreenHome extends State<ScreenHome> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image(
-                  image: AssetImage(modelBundle.imagePath),
-                  fit: BoxFit.fill,
-                )),
+            // ClipRRect(
+            //     borderRadius: BorderRadius.circular(20),
+            //     child: Image(
+            //       image: AssetImage(modelBundle.imagePath),
+            //       fit: BoxFit.fill,
+            //     )),
+            itemRechargeCard(modelBundle),
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
                 child: Text('USSD Bundle: ${modelBundle.bundle}')),
