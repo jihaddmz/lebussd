@@ -9,8 +9,11 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
+import 'package:lebussd/models/model_purchase_history.dart';
+import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
+import 'package:lebussd/sqlite_actions.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
 
@@ -25,6 +28,7 @@ class _ScreenHome extends State<ScreenHome> {
   double _availableUSSD = 0.0;
   String _carrier = "Touch";
   String _error = "";
+  int _selectedIndex = 0;
 
   _ScreenHome() {
     // if (!isClientPhone()) {
@@ -198,6 +202,26 @@ class _ScreenHome extends State<ScreenHome> {
         });
 
     return Scaffold(
+        bottomNavigationBar: BottomNavigationBar(
+          onTap: (index) {
+            setState(() {
+              if (_selectedIndex != index) {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (BuildContext context) {
+                  if (index == 0) {
+                    return ScreenHome();
+                  } else {
+                    return ScreenPurchaseHistory();
+                  }
+                }));
+              }
+            });
+          },
+          selectedItemColor: primaryColor,
+          unselectedItemColor: Colors.black,
+          items: Singleton().listOfBottomNavItems,
+          currentIndex: _selectedIndex,
+        ),
         appBar: AppBar(
           leading: const Icon(Icons.store),
           title:
@@ -367,7 +391,10 @@ class _ScreenHome extends State<ScreenHome> {
                 if (await Helpers.requestSMSPermission(context)) {
                   if (Singleton().isConnected) {
                     if (modelBundle.bundle <= _availableUSSD + 0.16) {
-                      sendChargeRequest(modelBundle);
+                      // sendChargeRequest(modelBundle);
+                      DateTime now = DateTime.now();
+                      String date = "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                      SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(id: 0, bundle: modelBundle.bundle, price: modelBundle.price, date: date));
                       // todo card can be charged
                     } else {
                       // there is no enough credits to charge

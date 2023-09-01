@@ -7,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
+import 'package:lebussd/sqlite_actions.dart';
+import 'package:path/path.dart';
 import 'package:path_provider_android/path_provider_android.dart';
+import 'package:sqflite/sqflite.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -36,6 +39,21 @@ class _MyApp extends State<MyApp> {
   _MyApp() {
     if (Platform.isAndroid) PathProviderAndroid.registerWith();
     checkNetwork();
+    createDatabase();
+  }
+
+  Future<void> createDatabase() async {
+    await openDatabase(
+            // Set the path to the database. Note: Using the `join` function from the
+            // `path` package is best practice to ensure the path is correctly
+            // constructed for each platform.
+            join(await getDatabasesPath(), 'db_app.db'),
+            onCreate: (db, version) async {
+      await SqliteActions().createPurchaseHistoryTable(db);
+    }, version: 1)
+        .then((value) {
+      Singleton().databaseSqlite = value;
+    });
   }
 
   void checkNetwork() async {
