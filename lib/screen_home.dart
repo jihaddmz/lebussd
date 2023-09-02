@@ -243,24 +243,6 @@ class _ScreenHome extends State<ScreenHome> {
                   });
                 },
                 icon: const Icon(Icons.logout)),
-            IconButton(
-                onPressed: () async {
-                  if (await Helpers.requestPhonePermission(context)) {
-                    if (context.mounted) {
-                      HelperDialog().showLoaderDialog(context);
-                      checkUSSD(onResponseResult: (result) {
-                        Navigator.pop(context);
-                        HelperDialog()
-                            .showDialogInfo(null, result, context, true, () {
-                          Navigator.pop(context);
-                        });
-                      }, onResponseError: () {
-                        Navigator.pop(context);
-                      });
-                    }
-                  }
-                },
-                icon: const Icon(Icons.phone))
           ],
         ),
         body: SingleChildScrollView(
@@ -279,15 +261,37 @@ class _ScreenHome extends State<ScreenHome> {
                             alignment: AlignmentDirectional.centerStart,
                             child: Padding(
                                 padding: const EdgeInsets.only(right: 80),
-                                child: Text(
-                                  'Available USSD: $_availableUSSD',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: Theme.of(context)
-                                          .textTheme
-                                          .displayMedium!
-                                          .fontSize),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (await Helpers.requestPhonePermission(
+                                        context)) {
+                                      if (context.mounted) {
+                                        HelperDialog()
+                                            .showLoaderDialog(context);
+                                        checkUSSD(onResponseResult: (result) {
+                                          Navigator.pop(context);
+                                          HelperDialog().showDialogInfo(
+                                              null, result, context, true, () {
+                                            Navigator.pop(context);
+                                          });
+                                        }, onResponseError: () {
+                                          Navigator.pop(context);
+                                        });
+                                      }
+                                    }
+                                  },
+                                  child: Text(
+                                    'Check Balance',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.white,
+                                        color: Colors.white,
+                                        fontSize: Theme.of(context)
+                                            .textTheme
+                                            .displayMedium!
+                                            .fontSize),
+                                  ),
                                 ))),
                         Container(
                           alignment: Alignment.centerRight,
@@ -375,12 +379,6 @@ class _ScreenHome extends State<ScreenHome> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // ClipRRect(
-            //     borderRadius: BorderRadius.circular(20),
-            //     child: Image(
-            //       image: AssetImage(modelBundle.imagePath),
-            //       fit: BoxFit.fill,
-            //     )),
             itemRechargeCard(modelBundle),
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
@@ -393,8 +391,15 @@ class _ScreenHome extends State<ScreenHome> {
                     if (modelBundle.bundle <= _availableUSSD + 0.16) {
                       // sendChargeRequest(modelBundle);
                       DateTime now = DateTime.now();
-                      String date = "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-                      SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(id: 0, bundle: modelBundle.bundle, price: modelBundle.price, date: date));
+                      String date =
+                          "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                      SqliteActions().insertPurchaseHistory(
+                          ModelPurchaseHistory(
+                              id: 0,
+                              bundle: modelBundle.bundle,
+                              price: modelBundle.price,
+                              date: date,
+                              color: modelBundle.color));
                       // todo card can be charged
                     } else {
                       // there is no enough credits to charge

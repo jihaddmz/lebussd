@@ -8,7 +8,7 @@ class SqliteActions {
   Future<void> createPurchaseHistoryTable(Database db) async {
     Helpers.logD("Entered");
     await db.execute(
-        "create table purchase_history (id integer primary key, bundle double, price double, date text)");
+        "create table purchase_history (id integer primary key, bundle double, price double, date text, color text)");
   }
 
   Future<void> insertPurchaseHistory(
@@ -27,7 +27,8 @@ class SqliteActions {
           id: listOfRecords[index]['id'],
           bundle: listOfRecords[index]['bundle'],
           price: listOfRecords[index]['price'],
-          date: listOfRecords[index]['date']);
+          date: listOfRecords[index]['date'],
+      color: listOfRecords[index]['color']);
     });
   }
 

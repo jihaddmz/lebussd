@@ -3,6 +3,7 @@ import 'dart:ui';
 class ModelBundle {
   double price;
   double bundle;
+  String color;
 
-  ModelBundle(this.price, this.bundle);
+  ModelBundle(this.price, this.bundle, this.color);
 }

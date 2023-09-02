@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,7 @@ import 'package:lebussd/models/model_bundle.dart';
 
 Widget itemRechargeCard(ModelBundle modelBundle) {
   return Card(
-    color: Colors.white54,
+    color: Color(int.parse(modelBundle.color)),
       child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(
@@ -16,13 +17,13 @@ Widget itemRechargeCard(ModelBundle modelBundle) {
                 style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                    color: Colors.white),
               ),
               const Padding(
                 padding: EdgeInsets.only(left: 10),
                 child: Text(
                   "Recharge Card",
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
               const Align(

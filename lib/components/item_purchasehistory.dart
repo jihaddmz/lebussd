@@ -9,7 +9,7 @@ Widget itemPurchaseHistory(ModelPurchaseHistory modelPurchaseHistory) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       itemRechargeCard(
-          ModelBundle(modelPurchaseHistory.price, modelPurchaseHistory.bundle)),
+          ModelBundle(modelPurchaseHistory.price, modelPurchaseHistory.bundle, modelPurchaseHistory.color)),
       Padding(
         padding: const EdgeInsets.fromLTRB(10, 30, 10, 30),
         child: Column(
