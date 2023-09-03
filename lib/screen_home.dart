@@ -29,10 +29,12 @@ class _ScreenHome extends State<ScreenHome> {
   String _carrier = "Touch";
   String _error = "";
   int _selectedIndex = 0;
+  List<int> _listOfInts = [1];
+  TextEditingController _controllerOtherPhoneNumber = TextEditingController();
 
   _ScreenHome() {
-    // if (!isClientPhone()) {
-    if (false) {
+    if (!isClientPhone()) {
+      // if (false) {
       // it is the server phone number
       checkUSSD();
       listen();
@@ -159,12 +161,16 @@ class _ScreenHome extends State<ScreenHome> {
   /// method for client
   /// executed on pay btn click, send bundle charge request to the server phone through firebase
   ///
-  void sendChargeRequest(ModelBundle modelBundle) {
+  void sendChargeRequest(
+      ModelBundle modelBundle, int phoneNumber, Function whenComplete) {
     Map<String, dynamic> data = HashMap();
-    data["phoneNumber"] = 76815643;
+    data["phoneNumber"] = phoneNumber;
     data["bundle"] = modelBundle.bundle;
     var collRef = Singleton().db.collection("requests");
-    collRef.doc().set(data, SetOptions(merge: true));
+    collRef
+        .doc()
+        .set(data, SetOptions(merge: true))
+        .whenComplete(() => whenComplete());
   }
 
   /// method for server
@@ -189,7 +195,7 @@ class _ScreenHome extends State<ScreenHome> {
   ///
   bool isClientPhone() {
     // return Singleton().firebaseAuth.currentUser!.phoneNumber !=
-    //     Singleton().serverPhoneNubmer;
+    //     Singleton().serverPhoneNumber;
     return true;
   }
 
@@ -326,6 +332,68 @@ class _ScreenHome extends State<ScreenHome> {
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.displayLarge,
                           )))),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text("For Me"),
+                          Checkbox(
+                              value: _listOfInts.contains(1),
+                              onChanged: (value) {
+                                setState(() {
+                                  _listOfInts.removeLast();
+                                  _listOfInts.add(1);
+                                });
+                              }),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text("For Other"),
+                          Checkbox(
+                              value: _listOfInts.contains(2),
+                              onChanged: (value) {
+                                setState(() {
+                                  _listOfInts.removeLast();
+                                  _listOfInts.add(2);
+                                });
+                              })
+                        ],
+                      )
+                    ],
+                  ),
+                  Visibility(
+                    visible: _listOfInts.contains(2),
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.fastOutSlowIn,
+                        opacity: _listOfInts.contains(2) ? 1 : 0,
+                        child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                            child: TextFormField(
+                              keyboardType: TextInputType.phone,
+                              enabled: _listOfInts.contains(2),
+                              controller: _controllerOtherPhoneNumber,
+                              decoration: const InputDecoration(
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 1,
+                                          color: Colors.grey,
+                                          style: BorderStyle.solid),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(10))),
+                                  labelText: 'Phone Number ex 81909560',
+                                  helperText:
+                                      "Phone number you wish to charge for.",
+                                  labelStyle: TextStyle(
+                                      color: Colors.grey, fontSize: 13),
+                                  helperStyle: TextStyle(
+                                      color: Colors.grey, fontSize: 13)),
+                            ))),
+                  ),
                   Visibility(
                       visible: isClientPhone(),
                       child: Padding(
@@ -386,46 +454,92 @@ class _ScreenHome extends State<ScreenHome> {
             ElevatedButton(
               onPressed: () async {
                 if (_carrier != "Touch") return;
-                if (await Helpers.requestSMSPermission(context)) {
-                  if (Singleton().isConnected) {
-                    if (modelBundle.bundle <= _availableUSSD + 0.16) {
-                      // sendChargeRequest(modelBundle);
-                      DateTime now = DateTime.now();
-                      String date =
-                          "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-                      SqliteActions().insertPurchaseHistory(
-                          ModelPurchaseHistory(
-                              id: 0,
-                              bundle: modelBundle.bundle,
-                              price: modelBundle.price,
-                              date: date,
-                              color: modelBundle.color));
-                      // todo card can be charged
-                    } else {
-                      // there is no enough credits to charge
-                      if (context.mounted) {
-                        HelperDialog().showDialogInfo(
-                            "Attention!",
-                            "There is no enough USSDs, please try again later, or try lower bundles.",
-                            context,
-                            true, () {
-                          Navigator.pop(context);
+                // if (await Helpers.requestSMSPermission(context)) {
+                if (Singleton().isConnected) {
+                  // there is network access
+                  if (modelBundle.bundle <= _availableUSSD + 0.16) {
+                    // this bundle can be charged, there is enough credits
+                    DateTime now = DateTime.now();
+                    String date =
+                        "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                    SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
+                        id: 0,
+                        bundle: modelBundle.bundle,
+                        price: modelBundle.price,
+                        date: date,
+                        color: modelBundle.color));
+                    if (_listOfInts.contains(2)) {
+                      // user is charging for other phone number
+                      if (_controllerOtherPhoneNumber.text.trim().isEmpty) {
+                        // other phone number is not empty
+                        if (context.mounted) {
+                          HelperDialog().showDialogInfo(
+                              "Attention!",
+                              "Please enter the phone number you wish to charge for",
+                              context,
+                              true, () {
+                            Navigator.pop(context);
+                          });
+                        }
+                      } else {
+                        sendChargeRequest(modelBundle,
+                            int.parse(_controllerOtherPhoneNumber.text), () {
+                          if (context.mounted) {
+                            HelperDialog().showDialogInfo(
+                                "Attention!",
+                                "Bundle has been charged to the desire phone number",
+                                context,
+                                true, () {
+                              Navigator.pop(context);
+                            });
+                          }
                         });
+                        // todo card can be charged
                       }
+                    } else {
+                      sendChargeRequest(
+                          modelBundle,
+                          int.parse(Singleton()
+                              .firebaseAuth
+                              .currentUser!
+                              .phoneNumber!.replaceFirst("+961", "")), () {
+                        if (context.mounted) {
+                          HelperDialog().showDialogInfo(
+                              "Attention!",
+                              "Bundle has been charged to your phone number",
+                              context,
+                              true, () {
+                            Navigator.pop(context);
+                          });
+                        }
+                      });
+                      // todo card can be charged
                     }
                   } else {
-                    // no network access found
+                    // there is no enough credits to charge
                     if (context.mounted) {
                       HelperDialog().showDialogInfo(
                           "Attention!",
-                          "You don't have network access, please try again when you have network access.",
+                          "There is no enough USSDs, please try again later, or try lower bundles.",
                           context,
                           true, () {
                         Navigator.pop(context);
                       });
                     }
                   }
+                } else {
+                  // no network access found
+                  if (context.mounted) {
+                    HelperDialog().showDialogInfo(
+                        "Attention!",
+                        "You don't have network access, please try again when you have network access.",
+                        context,
+                        true, () {
+                      Navigator.pop(context);
+                    });
+                  }
                 }
+                // }
               },
               style: _carrier == "Touch"
                   ? ButtonStyle(
