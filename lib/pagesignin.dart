@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/helpers.dart';
 import 'package:lebussd/screen_home.dart';
 
-import 'helpers.dart';
 import 'singleton.dart';
 
 class SigninPage extends StatefulWidget {
@@ -21,6 +21,7 @@ class _SigninPage extends State<SigninPage> {
   bool _isButtonDisabled = false;
   String _carrierValue = "Touch";
   List<String> list = const ["Touch", "Alpha"];
+  bool _wrongVerificationCode = false;
 
   _SigninPage();
 
@@ -33,15 +34,22 @@ class _SigninPage extends State<SigninPage> {
       if (value.user != null) {
         HelperSharedPreferences.setString("carrier", _carrierValue);
         // Future.delayed(const Duration(milliseconds: 500), () {
-          Navigator.pop(context); // dismissing the dialog loading
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (BuildContext context) {
-            return ScreenHome();
-          }));
-        // });
+        Navigator.pop(context); // dismissing the dialog loading
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (BuildContext context) {
+          return ScreenHome();
+        }));
       } else {
         Navigator.pop(context); // dismissing the dialog loading
-        Helpers.logD(" User is not allowed to login");
+      }
+    }).onError((error, stackTrace) {
+      Navigator.pop(context); // dismissing the dialog loading
+      if (error
+          .toString()
+          .contains("The verification code from SMS/TOTP is invalid")) {
+        setState(() {
+          _wrongVerificationCode = true;
+        });
       }
     });
   }
@@ -108,7 +116,13 @@ class _SigninPage extends State<SigninPage> {
                   if (_isButtonDisabled) return;
 
                   if (!Singleton().isConnected) {
-                    HelperDialog().showDialogInfo("Attention", "No network access, please connect and try again.", context, true, (){Navigator.pop(context);});
+                    HelperDialog().showDialogInfo(
+                        "Attention",
+                        "No network access, please connect and try again.",
+                        context,
+                        true, () {
+                      Navigator.pop(context);
+                    });
                     return;
                   }
 
@@ -219,10 +233,15 @@ class _SigninPage extends State<SigninPage> {
                   child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 80, 20, 0),
                       child: TextFormField(
+                        onChanged: (value) {
+                          setState(() {
+                            _wrongVerificationCode = false;
+                          });
+                        },
                         enabled: _isCodeSent,
                         controller: _controllerCode,
-                        decoration: const InputDecoration(
-                            enabledBorder: OutlineInputBorder(
+                        decoration: InputDecoration(
+                            enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(
                                     width: 1,
                                     color: Colors.grey,
@@ -231,13 +250,23 @@ class _SigninPage extends State<SigninPage> {
                                     BorderRadius.all(Radius.circular(10))),
                             labelText: 'Verification Code',
                             helperText: "Verification code is sent by sms!",
-                            labelStyle:
-                                TextStyle(color: Colors.grey, fontSize: 13),
-                            helperStyle:
-                                TextStyle(color: Colors.grey, fontSize: 13)),
+                            errorText: _wrongVerificationCode
+                                ? "Invalid Verification Code"
+                                : null,
+                            labelStyle: const TextStyle(
+                                color: Colors.grey, fontSize: 13),
+                            helperStyle: const TextStyle(
+                                color: Colors.grey, fontSize: 13)),
                       ))),
             ),
           ],
         )));
+  }
+
+  @override
+  void dispose() {
+    _controllerCode.dispose();
+    _controllerPhoneNumber.dispose();
+    super.dispose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dart_ping/dart_ping.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lebussd/helepr_purchases.dart';
 import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
   );
   Singleton().firebaseAuth = FirebaseAuth.instance;
   Singleton().db = FirebaseFirestore.instance;
+  HelpersPurchases().initPlatformState();
   runApp(MyApp());
 }
 

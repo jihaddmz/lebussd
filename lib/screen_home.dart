@@ -17,6 +17,7 @@ import 'package:lebussd/sqlite_actions.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
 
+import 'helepr_purchases.dart';
 import 'helpers.dart';
 
 class ScreenHome extends StatefulWidget {
@@ -31,6 +32,7 @@ class _ScreenHome extends State<ScreenHome> {
   int _selectedIndex = 0;
   List<int> _listOfInts = [1];
   TextEditingController _controllerOtherPhoneNumber = TextEditingController();
+  List<ModelBundle> _listOfBundle = [];
 
   _ScreenHome() {
     if (!isClientPhone()) {
@@ -206,6 +208,25 @@ class _ScreenHome extends State<ScreenHome> {
             _carrier = value ?? "";
           })
         });
+
+    HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
+      setState(() {
+        _listOfBundle = [
+          ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price, 0.5,
+              "0xffFFCC00"),
+          ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
+              "0xffFF3B30"),
+          ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price, 1.5,
+              "0xffFF9500"),
+          ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
+              "0xff4CD964"),
+          ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price, 2.5,
+              "0xff5AC8FA"),
+          ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
+              "0xff5856D6"),
+        ];
+      });
+    });
 
     return Scaffold(
         bottomNavigationBar: BottomNavigationBar(
@@ -394,49 +415,51 @@ class _ScreenHome extends State<ScreenHome> {
                                       color: Colors.grey, fontSize: 13)),
                             ))),
                   ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Visibility(
+                          visible: isClientPhone(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50),
+                            child: Text(
+                              'USSD Bundles:',
+                              style: Theme.of(context).textTheme.labelMedium,
+                              textAlign: TextAlign.left,
+                            ),
+                          )),
+                      Visibility(
+                          visible: _listOfBundle.isEmpty,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 50),
+                            child: Text("Loading Cards..."),
+                          ))
+                    ],
+                  ),
                   Visibility(
                       visible: isClientPhone(),
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 50),
-                        child: Text(
-                          'USSD Bundles:',
-                          style: Theme.of(context).textTheme.labelMedium,
-                          textAlign: TextAlign.left,
-                        ),
-                      )),
-                  Visibility(
-                      visible: isClientPhone(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Column(
-                          children: [
-                            item(Singleton().listOfBundle[0]),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 30),
-                              child: item(Singleton().listOfBundle[1]),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 30),
-                              child: item(Singleton().listOfBundle[2]),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 30),
-                              child: item(Singleton().listOfBundle[3]),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 30),
-                              child: item(Singleton().listOfBundle[4]),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 30),
-                              child: item(Singleton().listOfBundle[5]),
-                            ),
-                          ],
-                        ),
-                      ))
+                          padding: const EdgeInsets.only(top: 20),
+                          child: Visibility(
+                              visible: _listOfBundle.isNotEmpty,
+                              child: Column(
+                                children: listOfCards(),
+                              )))),
                 ],
               )),
         ));
+  }
+
+  List<Widget> listOfCards() {
+    List<Widget> list = [];
+    for (int i = 0; i < _listOfBundle.length; i++) {
+      list.add(Padding(
+        padding: const EdgeInsets.only(top: 30),
+        child: item(_listOfBundle[i]),
+      ));
+    }
+    return list;
   }
 
   Widget item(ModelBundle modelBundle) {
@@ -502,7 +525,8 @@ class _ScreenHome extends State<ScreenHome> {
                           int.parse(Singleton()
                               .firebaseAuth
                               .currentUser!
-                              .phoneNumber!.replaceFirst("+961", "")), () {
+                              .phoneNumber!
+                              .replaceFirst("+961", "")), () {
                         if (context.mounted) {
                           HelperDialog().showDialogInfo(
                               "Attention!",
