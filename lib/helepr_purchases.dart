@@ -1,14 +1,12 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
-import 'package:lebussd/models/model_bundle.dart';
-import 'package:lebussd/singleton.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class HelpersPurchases {
 
   Future<void> initPlatformState() async {
-    await Purchases.setLogLevel(LogLevel.debug);
+    await Purchases.setLogLevel(LogLevel.error);
 
     PurchasesConfiguration configuration = PurchasesConfiguration(
         "goog_XcmarpGGuGdsuSzcJrehkQZGCza"); // for android

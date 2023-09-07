@@ -14,6 +14,7 @@ import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
 
@@ -33,6 +34,7 @@ class _ScreenHome extends State<ScreenHome> {
   List<int> _listOfInts = [1];
   TextEditingController _controllerOtherPhoneNumber = TextEditingController();
   List<ModelBundle> _listOfBundle = [];
+  late List<Package> listOfPackages;
 
   _ScreenHome() {
     if (!isClientPhone()) {
@@ -128,7 +130,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 5), () {
       final collRef = Singleton().db.collection("requests");
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
@@ -210,6 +212,7 @@ class _ScreenHome extends State<ScreenHome> {
         });
 
     HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
+      listOfPackages = offering.availablePackages;
       setState(() {
         _listOfBundle = [
           ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price, 0.5,
@@ -482,15 +485,6 @@ class _ScreenHome extends State<ScreenHome> {
                   // there is network access
                   if (modelBundle.bundle <= _availableUSSD + 0.16) {
                     // this bundle can be charged, there is enough credits
-                    DateTime now = DateTime.now();
-                    String date =
-                        "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-                    SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
-                        id: 0,
-                        bundle: modelBundle.bundle,
-                        price: modelBundle.price,
-                        date: date,
-                        color: modelBundle.color));
                     if (_listOfInts.contains(2)) {
                       // user is charging for other phone number
                       if (_controllerOtherPhoneNumber.text.trim().isEmpty) {
@@ -505,39 +499,93 @@ class _ScreenHome extends State<ScreenHome> {
                           });
                         }
                       } else {
-                        sendChargeRequest(modelBundle,
-                            int.parse(_controllerOtherPhoneNumber.text), () {
-                          if (context.mounted) {
+                        for (var package in listOfPackages) {
+                          if (package.identifier ==
+                              "ussd_${modelBundle.bundle}") {
+                            Purchases.purchasePackage(package).then((value) {
+                              // payment is successful
+                              DateTime now = DateTime.now();
+                              String date =
+                                  "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                              SqliteActions().insertPurchaseHistory(
+                                  ModelPurchaseHistory(
+                                      id: 0,
+                                      bundle: modelBundle.bundle,
+                                      price: modelBundle.price,
+                                      date: date,
+                                      color: modelBundle.color));
+                              sendChargeRequest(modelBundle,
+                                  int.parse(_controllerOtherPhoneNumber.text),
+                                  () {
+                                if (context.mounted) {
+                                  HelperDialog().showDialogInfo(
+                                      "Success!",
+                                      "Bundle has been charged to the desired phone number",
+                                      context,
+                                      true, () {
+                                    Navigator.pop(context);
+                                  });
+                                }
+                              });
+                            }).onError((error, stackTrace) {
+                              // Payment failed
+                              HelperDialog().showDialogInfo(
+                                  "Warning!",
+                                  "Purchase failed, make sure you entered the correct card details and you have enough money!",
+                                  context,
+                                  true, () {
+                                Navigator.pop(context);
+                              });
+                            });
+                            return;
+                          }
+                        }
+                      }
+                    } else {
+                      // charging for current phone number
+                      for (var package in listOfPackages) {
+                        if (package.identifier ==
+                            "ussd_${modelBundle.bundle}") {
+                          Purchases.purchasePackage(package).then((value) {
+                            DateTime now = DateTime.now();
+                            String date =
+                                "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                            SqliteActions().insertPurchaseHistory(
+                                ModelPurchaseHistory(
+                                    id: 0,
+                                    bundle: modelBundle.bundle,
+                                    price: modelBundle.price,
+                                    date: date,
+                                    color: modelBundle.color));
+                            sendChargeRequest(
+                                modelBundle,
+                                int.parse(Singleton()
+                                    .firebaseAuth
+                                    .currentUser!
+                                    .phoneNumber!
+                                    .replaceFirst("+961", "")), () {
+                              if (context.mounted) {
+                                HelperDialog().showDialogInfo(
+                                    "Success!",
+                                    "Bundle has been charged to your phone number",
+                                    context,
+                                    true, () {
+                                  Navigator.pop(context);
+                                });
+                              }
+                            });
+                          }).onError((error, stackTrace) {
                             HelperDialog().showDialogInfo(
-                                "Attention!",
-                                "Bundle has been charged to the desire phone number",
+                                "Warning!",
+                                "Purchase failed, make sure you entered the correct card details and you have enough money!",
                                 context,
                                 true, () {
                               Navigator.pop(context);
                             });
-                          }
-                        });
-                        // todo card can be charged
-                      }
-                    } else {
-                      sendChargeRequest(
-                          modelBundle,
-                          int.parse(Singleton()
-                              .firebaseAuth
-                              .currentUser!
-                              .phoneNumber!
-                              .replaceFirst("+961", "")), () {
-                        if (context.mounted) {
-                          HelperDialog().showDialogInfo(
-                              "Attention!",
-                              "Bundle has been charged to your phone number",
-                              context,
-                              true, () {
-                            Navigator.pop(context);
                           });
+                          return;
                         }
-                      });
-                      // todo card can be charged
+                      }
                     }
                   } else {
                     // there is no enough credits to charge

@@ -19,8 +19,7 @@ class _ScreenWelcome extends State<ScreenWelcome> {
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            Expanded(
-                child: PageView.builder(
+            PageView.builder(
               controller: _pageController,
               itemBuilder: (BuildContext context, int index) {
                 return _pages[index % _pages.length];
@@ -31,7 +30,7 @@ class _ScreenWelcome extends State<ScreenWelcome> {
                   _activePage = page;
                 });
               },
-            )),
+            ),
             _activePage == 1
                 ? Container()
                 : Positioned(
