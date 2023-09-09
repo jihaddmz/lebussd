@@ -233,6 +233,7 @@ class _SigninPage extends State<SigninPage> {
                   child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 80, 20, 0),
                       child: TextFormField(
+                        keyboardType: TextInputType.number,
                         onChanged: (value) {
                           setState(() {
                             _wrongVerificationCode = false;
