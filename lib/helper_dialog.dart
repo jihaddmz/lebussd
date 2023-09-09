@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class HelperDialog {
   void showDialogInfo(String? title, String content, BuildContext context,
@@ -29,19 +30,21 @@ class HelperDialog {
 
   void showLoaderDialog(BuildContext context) {
     showDialog(
-      barrierDismissible: false,
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            content: Row(
-              children: [
-                const CircularProgressIndicator(),
-                Container(
-                    margin: const EdgeInsets.only(left: 20),
-                    child: Text("Loading...")),
-              ],
-            ),
-          );
+              content: SizedBox(
+                  height: 100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Lottie.asset('assets/loading.json', animate: true),
+                      // Container(
+                      //     margin: const EdgeInsets.only(left: 20),
+                      //     child: const Text("Loading...")),
+                    ],
+                  )));
         });
   }
 

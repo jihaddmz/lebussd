@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lebussd/components/item_purchasehistory.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/sqlite_actions.dart';
+import 'package:lottie/lottie.dart';
 
 import 'models/model_purchase_history.dart';
 
@@ -28,8 +29,7 @@ class _ScreenPurchaseHistory extends State<ScreenPurchaseHistory> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("History",
-            style: Theme.of(context).textTheme.displayLarge),
+        title: Text("History", style: Theme.of(context).textTheme.displayLarge),
         actions: [
           IconButton(
               onPressed: () {
@@ -51,13 +51,17 @@ class _ScreenPurchaseHistory extends State<ScreenPurchaseHistory> {
       ),
       body: Padding(
         padding: const EdgeInsets.only(top: 10),
-        child: ListView.builder(
-            itemCount: _list.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: itemPurchaseHistory(_list[index]));
-            }),
+        child: _list.isEmpty
+            ? Center(
+                child: Lottie.asset('assets/loading.json', animate: true)
+              )
+            : ListView.builder(
+                itemCount: _list.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                      padding: const EdgeInsets.only(top: 30),
+                      child: itemPurchaseHistory(_list[index]));
+                }),
       ),
     );
   }

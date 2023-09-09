@@ -14,6 +14,7 @@ import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
+import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:rxdart/rxdart.dart';
@@ -36,6 +37,7 @@ class _ScreenHome extends State<ScreenHome> {
   TextEditingController _controllerOtherPhoneNumber = TextEditingController();
   List<ModelBundle> _listOfBundle = [];
   late List<Package> listOfPackages;
+  String? _errorText;
 
   _ScreenHome() {
     if (!isClientPhone()) {
@@ -209,6 +211,9 @@ class _ScreenHome extends State<ScreenHome> {
     HelperSharedPreferences.getString("carrier").then((value) => {
           setState(() {
             _carrier = value ?? "";
+            if (_carrier != "Touch") {
+              _listOfInts.add(2);
+            }
           })
         });
 
@@ -282,6 +287,11 @@ class _ScreenHome extends State<ScreenHome> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Load a Lottie file from your assets
+                  Visibility(
+                      visible: _listOfBundle.isEmpty,
+                      child:
+                          Lottie.asset('assets/loading.json', animate: true)),
                   Card(
                     color: primaryColor,
                     child: Stack(
@@ -341,12 +351,10 @@ class _ScreenHome extends State<ScreenHome> {
                       ],
                     ),
                   ),
-                  Visibility(
-                      visible: _carrier != "Touch",
-                      child: const Text(
-                        "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
-                        style: TextStyle(color: Colors.grey),
-                      )),
+                  const Text(
+                    "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   Visibility(
                       visible: !isClientPhone(),
                       child: SizedBox(
@@ -365,12 +373,14 @@ class _ScreenHome extends State<ScreenHome> {
                           const Text("For Me"),
                           Checkbox(
                               value: _listOfInts.contains(1),
-                              onChanged: (value) {
-                                setState(() {
-                                  _listOfInts.removeLast();
-                                  _listOfInts.add(1);
-                                });
-                              }),
+                              onChanged: _carrier != "Touch"
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _listOfInts.removeLast();
+                                        _listOfInts.add(1);
+                                      });
+                                    }),
                         ],
                       ),
                       Row(
@@ -402,8 +412,13 @@ class _ScreenHome extends State<ScreenHome> {
                               keyboardType: TextInputType.phone,
                               enabled: _listOfInts.contains(2),
                               controller: _controllerOtherPhoneNumber,
-                              decoration: const InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
+                              onChanged: (value) {
+                                setState(() {
+                                  _errorText = null;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                  enabledBorder: const OutlineInputBorder(
                                       borderSide: BorderSide(
                                           width: 1,
                                           color: Colors.grey,
@@ -413,9 +428,10 @@ class _ScreenHome extends State<ScreenHome> {
                                   labelText: 'Phone Number ex 81909560',
                                   helperText:
                                       "Phone number you wish to charge for.",
-                                  labelStyle: TextStyle(
+                                  errorText: _errorText,
+                                  labelStyle: const TextStyle(
                                       color: Colors.grey, fontSize: 13),
-                                  helperStyle: TextStyle(
+                                  helperStyle: const TextStyle(
                                       color: Colors.grey, fontSize: 13)),
                             ))),
                   ),
@@ -437,7 +453,7 @@ class _ScreenHome extends State<ScreenHome> {
                           visible: _listOfBundle.isEmpty,
                           child: const Padding(
                             padding: EdgeInsets.only(top: 50),
-                            child: Text("Loading Cards..."),
+                            child: Text("Loading Bundles..."),
                           ))
                     ],
                   ),
@@ -480,7 +496,6 @@ class _ScreenHome extends State<ScreenHome> {
                 child: Text('USSD Bundle: ${modelBundle.bundle}')),
             ElevatedButton(
               onPressed: () async {
-                if (_carrier != "Touch") return;
                 // if (await Helpers.requestSMSPermission(context)) {
                 if (Singleton().isConnected) {
                   // there is network access
@@ -490,17 +505,19 @@ class _ScreenHome extends State<ScreenHome> {
                     if (_listOfInts.contains(2)) {
                       // user is charging for other phone number
                       if (_controllerOtherPhoneNumber.text.trim().isEmpty) {
-                        // other phone number is not empty
-                        if (context.mounted) {
-                          HelperDialog().showDialogInfo(
-                              "Attention!",
-                              "Please enter the phone number you wish to charge for",
-                              context,
-                              true, () {
-                            Navigator.pop(context);
-                          });
-                        }
+                        // invalid phone number empty
+                        setState(() {
+                          _errorText = "Invalid Phone Number!";
+                        });
                       } else {
+                        if (_controllerOtherPhoneNumber.text.trim().length !=
+                            8) {
+                          // invalid phone number, not 8 digits
+                          setState(() {
+                            _errorText = "Invalid Phone Number!";
+                          });
+                          return;
+                        }
                         for (var package in listOfPackages) {
                           if (package.identifier ==
                               "ussd_${modelBundle.bundle}") {
@@ -516,11 +533,15 @@ class _ScreenHome extends State<ScreenHome> {
                                       price: modelBundle.price,
                                       date: date,
                                       color: modelBundle.color,
-                                      phoneNumber:
-                                          _controllerOtherPhoneNumber.text.replaceFirst("+", "").replaceFirst("961", "")));
-                              sendChargeRequest(modelBundle,
-                                  int.parse(_controllerOtherPhoneNumber.text.replaceFirst("+", "").replaceFirst("961", "")),
-                                  () {
+                                      phoneNumber: _controllerOtherPhoneNumber
+                                          .text
+                                          .replaceFirst("+", "")
+                                          .replaceFirst("961", "")));
+                              sendChargeRequest(
+                                  modelBundle,
+                                  int.parse(_controllerOtherPhoneNumber.text
+                                      .replaceFirst("+", "")
+                                      .replaceFirst("961", "")), () {
                                 if (context.mounted) {
                                   HelperDialog().showDialogInfo(
                                       "Success!",
@@ -622,29 +643,15 @@ class _ScreenHome extends State<ScreenHome> {
                 }
                 // }
               },
-              style: _carrier == "Touch"
-                  ? ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.white),
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(primaryColor),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
-                          ContinuousRectangleBorder(
-                              borderRadius: BorderRadius.circular(50))),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                          Size(MediaQuery.of(context).size.width - 50, 50)),
-                    )
-                  : ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.black),
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(secondaryColor),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
-                          ContinuousRectangleBorder(
-                              borderRadius: BorderRadius.circular(50))),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                          Size(MediaQuery.of(context).size.width - 50, 50)),
-                    ),
+              style: ButtonStyle(
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                backgroundColor: MaterialStateProperty.all<Color>(primaryColor),
+                shape: MaterialStateProperty.all<OutlinedBorder>(
+                    ContinuousRectangleBorder(
+                        borderRadius: BorderRadius.circular(50))),
+                minimumSize: MaterialStateProperty.all<Size>(
+                    Size(MediaQuery.of(context).size.width - 50, 50)),
+              ),
               child: Text(
                 "Pay \$${(modelBundle.price - Singleton().transferTax).toStringAsFixed(2)} + \$${Singleton().transferTax} Transfer Fee",
                 style: const TextStyle(fontSize: 15),
