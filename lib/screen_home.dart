@@ -14,6 +14,7 @@ import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
@@ -134,7 +135,8 @@ class _ScreenHome extends State<ScreenHome> {
       final collRef = Singleton().db.collection("requests");
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
-          _sendSMS(
+          Helpers.logD("send sms");
+          await _sendSMS(
               message:
                   "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
               recipients: const ["1199"],
@@ -180,13 +182,12 @@ class _ScreenHome extends State<ScreenHome> {
   /// method for server
   /// charging the client by sending a message to the client phone number ex: 76815643t1
   ///
-  void _sendSMS(
+  Future<void> _sendSMS(
       {required String message,
       required List<String> recipients,
       required Function whenComplete,
       required Function(dynamic) whenError}) async {
-    String _result = await sendSMS(
-            message: message, recipients: recipients, sendDirect: true)
+    await sendSMS(message: message, recipients: recipients, sendDirect: true)
         .catchError((onError) {
       whenError(onError);
     }).whenComplete(() {
@@ -198,9 +199,9 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    // return Singleton().firebaseAuth.currentUser!.phoneNumber !=
-    //     Singleton().serverPhoneNumber;
-    return true;
+    return Singleton().firebaseAuth.currentUser!.phoneNumber !=
+        Singleton().serverPhoneNumber;
+    // return true;
   }
 
   @override
@@ -483,7 +484,8 @@ class _ScreenHome extends State<ScreenHome> {
                 // if (await Helpers.requestSMSPermission(context)) {
                 if (Singleton().isConnected) {
                   // there is network access
-                  if (modelBundle.bundle <= _availableUSSD + 0.16) {
+                  if (modelBundle.bundle + Singleton().transferTax <=
+                      _availableUSSD) {
                     // this bundle can be charged, there is enough credits
                     if (_listOfInts.contains(2)) {
                       // user is charging for other phone number
@@ -592,7 +594,7 @@ class _ScreenHome extends State<ScreenHome> {
                     if (context.mounted) {
                       HelperDialog().showDialogInfo(
                           "Attention!",
-                          "There is no enough USSDs, please try again later, or try lower bundles.",
+                          "There is something wrong on our end, we're working on it!. Please try again later",
                           context,
                           true, () {
                         Navigator.pop(context);
@@ -637,7 +639,7 @@ class _ScreenHome extends State<ScreenHome> {
                           Size(MediaQuery.of(context).size.width - 50, 50)),
                     ),
               child: Text(
-                "Pay \$${modelBundle.price} + \$0.16 Transfer Fee",
+                "Pay \$${(modelBundle.price - Singleton().transferTax).toStringAsFixed(2)} + \$${Singleton().transferTax} Transfer Fee",
                 style: const TextStyle(fontSize: 15),
               ),
             )

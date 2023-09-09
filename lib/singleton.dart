@@ -16,9 +16,12 @@ class Singleton {
     // initialization logic
   }
 
+  final String serverPhoneNumber = "+96181909560";
+  final double transferTax = 0.16;
+
+
   late FirebaseAuth firebaseAuth;
   late FirebaseFirestore db;
-  String serverPhoneNumber = "+96181909560";
   List<ModelBundle> listOfBundle = [
     // ModelBundle(0.6, 0.5, "0xffFFCC00"),
     // ModelBundle(1.2, 1, "0xffFF3B30"),
