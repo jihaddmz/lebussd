@@ -51,6 +51,7 @@ dependencies:
   path: ^1.8.3
   purchases_flutter: ^5.6.4
   lottie: ^2.6.0
+  fluttercontactpicker: ^4.7.0
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sms/flutter_sms.dart';
+import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
@@ -429,6 +430,24 @@ class _ScreenHome extends State<ScreenHome> {
                                   helperText:
                                       "Phone number you wish to charge for.",
                                   errorText: _errorText,
+                                  suffixIcon: IconButton(
+                                      onPressed: () async {
+                                        if (await Helpers
+                                            .requestContactPermission(
+                                                context)) {
+                                          final PhoneContact contact =
+                                              await FlutterContactPicker
+                                                  .pickPhoneContact();
+
+                                          setState(() {
+                                            if (contact.phoneNumber != null) {
+                                              _controllerOtherPhoneNumber.text =
+                                                  contact.phoneNumber!.number.toString().replaceFirst("+961", "").replaceAll(" ", "");
+                                            }
+                                          });
+                                        }
+                                      },
+                                      icon: const Icon(Icons.contact_phone, color: primaryColor)),
                                   labelStyle: const TextStyle(
                                       color: Colors.grey, fontSize: 13),
                                   helperStyle: const TextStyle(
