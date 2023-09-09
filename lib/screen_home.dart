@@ -199,9 +199,9 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    return Singleton().firebaseAuth.currentUser!.phoneNumber !=
-        Singleton().serverPhoneNumber;
-    // return true;
+    // return Singleton().firebaseAuth.currentUser!.phoneNumber !=
+    //     Singleton().serverPhoneNumber;
+    return true;
   }
 
   @override
@@ -515,9 +515,11 @@ class _ScreenHome extends State<ScreenHome> {
                                       bundle: modelBundle.bundle,
                                       price: modelBundle.price,
                                       date: date,
-                                      color: modelBundle.color));
+                                      color: modelBundle.color,
+                                      phoneNumber:
+                                          _controllerOtherPhoneNumber.text.replaceFirst("+", "").replaceFirst("961", "")));
                               sendChargeRequest(modelBundle,
-                                  int.parse(_controllerOtherPhoneNumber.text),
+                                  int.parse(_controllerOtherPhoneNumber.text.replaceFirst("+", "").replaceFirst("961", "")),
                                   () {
                                 if (context.mounted) {
                                   HelperDialog().showDialogInfo(
@@ -558,7 +560,12 @@ class _ScreenHome extends State<ScreenHome> {
                                     bundle: modelBundle.bundle,
                                     price: modelBundle.price,
                                     date: date,
-                                    color: modelBundle.color));
+                                    color: modelBundle.color,
+                                    phoneNumber: Singleton()
+                                        .firebaseAuth
+                                        .currentUser!
+                                        .phoneNumber!
+                                        .replaceFirst("+961", "")));
                             sendChargeRequest(
                                 modelBundle,
                                 int.parse(Singleton()

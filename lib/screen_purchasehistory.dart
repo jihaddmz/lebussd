@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lebussd/components/item_purchasehistory.dart';
+import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/sqlite_actions.dart';
 
 import 'models/model_purchase_history.dart';
@@ -27,14 +28,35 @@ class _ScreenPurchaseHistory extends State<ScreenPurchaseHistory> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Purchase History", style: Theme.of(context).textTheme.displayLarge),
+        title: Text("History",
+            style: Theme.of(context).textTheme.displayLarge),
+        actions: [
+          IconButton(
+              onPressed: () {
+                HelperDialog().showDialogAffirmation(context, "Attention!",
+                    "Are you sure you want to delete all purchase history?",
+                    () {
+                  Navigator.pop(context);
+                  SqliteActions().deleteAllPurchasesHistory().then((value) {
+                    setState(() {
+                      _list.clear();
+                    });
+                  });
+                }, () {
+                  Navigator.pop(context);
+                });
+              },
+              icon: const Icon(Icons.delete_sweep))
+        ],
       ),
       body: Padding(
-        padding: const EdgeInsets.only(top: 40),
+        padding: const EdgeInsets.only(top: 10),
         child: ListView.builder(
             itemCount: _list.length,
             itemBuilder: (context, index) {
-              return itemPurchaseHistory(_list[index]);
+              return Padding(
+                  padding: const EdgeInsets.only(top: 30),
+                  child: itemPurchaseHistory(_list[index]));
             }),
       ),
     );

@@ -5,28 +5,29 @@ import 'package:lebussd/models/model_bundle.dart';
 import '../models/model_purchase_history.dart';
 
 Widget itemPurchaseHistory(ModelPurchaseHistory modelPurchaseHistory) {
-  return Row(
+  return SizedBox(height: 130, child: Row(
     crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.max,
     children: [
-      itemRechargeCard(
-          ModelBundle(modelPurchaseHistory.price, modelPurchaseHistory.bundle, modelPurchaseHistory.color)),
+      itemRechargeCard(ModelBundle(modelPurchaseHistory.price,
+          modelPurchaseHistory.bundle, modelPurchaseHistory.color)),
       Padding(
-        padding: const EdgeInsets.fromLTRB(10, 30, 10, 30),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                    "Bundle \$${modelPurchaseHistory.bundle}   Price \$${modelPurchaseHistory.price}")
-              ],
-            ),
-            Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text("Purchased at ${modelPurchaseHistory.date}"))
+            Text(
+                "Bundle \$${modelPurchaseHistory
+                    .bundle}   Price \$${modelPurchaseHistory.price}"),
+            Text("Phone Number ${modelPurchaseHistory.phoneNumber}"),
+            Container(
+              alignment: Alignment.bottomCenter,
+              child: Text("Purchased at ${modelPurchaseHistory.date}"),
+            )
           ],
         ),
       ),
     ],
-  );
+  ));
 }
