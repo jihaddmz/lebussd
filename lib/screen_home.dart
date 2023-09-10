@@ -293,198 +293,217 @@ class _ScreenHome extends State<ScreenHome> {
                       visible: _listOfBundle.isEmpty,
                       child:
                           Lottie.asset('assets/loading.json', animate: true)),
-                  Card(
-                    color: primaryColor,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        FractionallySizedBox(
-                            widthFactor: 0.8,
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Padding(
-                                padding: const EdgeInsets.only(right: 80),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    if (await Helpers.requestPhonePermission(
-                                        context)) {
-                                      if (context.mounted) {
-                                        HelperDialog()
-                                            .showLoaderDialog(context);
-                                        checkUSSD(onResponseResult: (result) {
-                                          Navigator.pop(context);
-                                          HelperDialog().showDialogInfo(
-                                              null, result, context, true, () {
-                                            Navigator.pop(context);
-                                          });
-                                        }, onResponseError: () {
-                                          Navigator.pop(context);
-                                        });
-                                      }
-                                    }
-                                  },
-                                  child: Text(
-                                    'Check Balance',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: Colors.white,
-                                        color: Colors.white,
-                                        fontSize: Theme.of(context)
-                                            .textTheme
-                                            .displayMedium!
-                                            .fontSize),
-                                  ),
-                                ))),
-                        Container(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.circular(300),
-                                child: const Image(
-                                  image: AssetImage('images/img_home.png'),
-                                  height: 80,
-                                  width: 80,
-                                  fit: BoxFit.fitWidth,
-                                )),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  const Text(
-                    "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  Visibility(
-                      visible: !isClientPhone(),
-                      child: SizedBox(
-                          height: MediaQuery.of(context).size.height,
-                          child: Center(
-                              child: Text(
-                            _error,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.displayLarge,
-                          )))),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Text("For Me"),
-                          Checkbox(
-                              value: _listOfInts.contains(1),
-                              onChanged: _carrier != "Touch"
-                                  ? null
-                                  : (value) {
-                                      setState(() {
-                                        _listOfInts.removeLast();
-                                        _listOfInts.add(1);
-                                      });
-                                    }),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text("For Other"),
-                          Checkbox(
-                              value: _listOfInts.contains(2),
-                              onChanged: (value) {
-                                setState(() {
-                                  _listOfInts.removeLast();
-                                  _listOfInts.add(2);
-                                });
-                              })
-                        ],
-                      )
-                    ],
-                  ),
-                  Visibility(
-                    visible: _listOfInts.contains(2),
-                    maintainAnimation: true,
-                    maintainState: true,
-                    child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.fastOutSlowIn,
-                        opacity: _listOfInts.contains(2) ? 1 : 0,
-                        child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                            child: TextFormField(
-                              keyboardType: TextInputType.phone,
-                              enabled: _listOfInts.contains(2),
-                              controller: _controllerOtherPhoneNumber,
-                              onChanged: (value) {
-                                setState(() {
-                                  _errorText = null;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 1,
-                                          color: Colors.grey,
-                                          style: BorderStyle.solid),
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(10))),
-                                  labelText: 'Phone Number ex 81909560',
-                                  helperText:
-                                      "Phone number you wish to charge for.",
-                                  errorText: _errorText,
-                                  suffixIcon: IconButton(
-                                      onPressed: () async {
+                      Card(
+                        color: primaryColor,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            FractionallySizedBox(
+                                widthFactor: 0.8,
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Padding(
+                                    padding: const EdgeInsets.only(right: 80),
+                                    child: GestureDetector(
+                                      onTap: () async {
                                         if (await Helpers
-                                            .requestContactPermission(
-                                                context)) {
-                                          final PhoneContact contact =
-                                              await FlutterContactPicker
-                                                  .pickPhoneContact();
-
-                                          setState(() {
-                                            if (contact.phoneNumber != null) {
-                                              _controllerOtherPhoneNumber.text =
-                                                  contact.phoneNumber!.number.toString().replaceFirst("+961", "").replaceAll(" ", "");
-                                            }
-                                          });
+                                            .requestPhonePermission(context)) {
+                                          if (context.mounted) {
+                                            HelperDialog()
+                                                .showLoaderDialog(context);
+                                            checkUSSD(
+                                                onResponseResult: (result) {
+                                              Navigator.pop(context);
+                                              HelperDialog().showDialogInfo(
+                                                  null, result, context, true,
+                                                  () {
+                                                Navigator.pop(context);
+                                              });
+                                            }, onResponseError: () {
+                                              Navigator.pop(context);
+                                            });
+                                          }
                                         }
                                       },
-                                      icon: const Icon(Icons.contact_phone, color: primaryColor)),
-                                  labelStyle: const TextStyle(
-                                      color: Colors.grey, fontSize: 13),
-                                  helperStyle: const TextStyle(
-                                      color: Colors.grey, fontSize: 13)),
-                            ))),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                                      child: Text(
+                                        'Check Balance',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            decoration:
+                                                TextDecoration.underline,
+                                            decorationColor: Colors.white,
+                                            color: Colors.white,
+                                            fontSize: Theme.of(context)
+                                                .textTheme
+                                                .displayMedium!
+                                                .fontSize),
+                                      ),
+                                    ))),
+                            Container(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 20),
+                                child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(300),
+                                    child: const Image(
+                                      image: AssetImage('images/img_home.png'),
+                                      height: 80,
+                                      width: 80,
+                                      fit: BoxFit.fitWidth,
+                                    )),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const Text(
+                        "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      Visibility(
+                          visible: !isClientPhone(),
+                          child: SizedBox(
+                              height: MediaQuery.of(context).size.height,
+                              child: Center(
+                                  child: Text(
+                                _error,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.displayLarge,
+                              )))),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Text("For Me"),
+                              Checkbox(
+                                  value: _listOfInts.contains(1),
+                                  onChanged: _carrier != "Touch"
+                                      ? null
+                                      : (value) {
+                                          setState(() {
+                                            _listOfInts.removeLast();
+                                            _listOfInts.add(1);
+                                          });
+                                        }),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Text("For Other"),
+                              Checkbox(
+                                  value: _listOfInts.contains(2),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _listOfInts.removeLast();
+                                      _listOfInts.add(2);
+                                    });
+                                  })
+                            ],
+                          )
+                        ],
+                      ),
+                      Visibility(
+                        visible: _listOfInts.contains(2),
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 1000),
+                            curve: Curves.fastOutSlowIn,
+                            opacity: _listOfInts.contains(2) ? 1 : 0,
+                            child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                                child: TextFormField(
+                                  keyboardType: TextInputType.phone,
+                                  enabled: _listOfInts.contains(2),
+                                  controller: _controllerOtherPhoneNumber,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _errorText = null;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                      enabledBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              width: 1,
+                                              color: Colors.grey,
+                                              style: BorderStyle.solid),
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10))),
+                                      labelText: 'Phone Number ex 81909560',
+                                      helperText:
+                                          "Phone number you wish to charge for.",
+                                      errorText: _errorText,
+                                      suffixIcon: IconButton(
+                                          onPressed: () async {
+                                            if (await Helpers
+                                                .requestContactPermission(
+                                                    context)) {
+                                              final PhoneContact contact =
+                                                  await FlutterContactPicker
+                                                      .pickPhoneContact();
+
+                                              setState(() {
+                                                if (contact.phoneNumber !=
+                                                    null) {
+                                                  _controllerOtherPhoneNumber
+                                                          .text =
+                                                      contact
+                                                          .phoneNumber!.number
+                                                          .toString()
+                                                          .replaceFirst(
+                                                              "+961", "")
+                                                          .replaceAll(" ", "");
+                                                }
+                                              });
+                                            }
+                                          },
+                                          icon: const Icon(Icons.contact_phone,
+                                              color: primaryColor)),
+                                      labelStyle: const TextStyle(
+                                          color: Colors.grey, fontSize: 13),
+                                      helperStyle: const TextStyle(
+                                          color: Colors.grey, fontSize: 13)),
+                                ))),
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Visibility(
+                              visible: isClientPhone(),
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 50),
+                                child: Text(
+                                  'USSD Bundles:',
+                                  style:
+                                      Theme.of(context).textTheme.labelMedium,
+                                  textAlign: TextAlign.left,
+                                ),
+                              )),
+                          Visibility(
+                              visible: _listOfBundle.isEmpty,
+                              child: const Padding(
+                                padding: EdgeInsets.only(top: 50),
+                                child: Text("Loading Bundles..."),
+                              ))
+                        ],
+                      ),
                       Visibility(
                           visible: isClientPhone(),
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 50),
-                            child: Text(
-                              'USSD Bundles:',
-                              style: Theme.of(context).textTheme.labelMedium,
-                              textAlign: TextAlign.left,
-                            ),
-                          )),
-                      Visibility(
-                          visible: _listOfBundle.isEmpty,
-                          child: const Padding(
-                            padding: EdgeInsets.only(top: 50),
-                            child: Text("Loading Bundles..."),
-                          ))
+                              padding: const EdgeInsets.only(top: 20),
+                              child: Visibility(
+                                  visible: _listOfBundle.isNotEmpty,
+                                  child: Column(
+                                    children: listOfCards(),
+                                  ))))
                     ],
                   ),
-                  Visibility(
-                      visible: isClientPhone(),
-                      child: Padding(
-                          padding: const EdgeInsets.only(top: 20),
-                          child: Visibility(
-                              visible: _listOfBundle.isNotEmpty,
-                              child: Column(
-                                children: listOfCards(),
-                              )))),
                 ],
               )),
         ));
