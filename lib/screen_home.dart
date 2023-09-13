@@ -8,9 +8,11 @@ import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
+import 'package:lebussd/components/options_selector.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
+import 'package:lebussd/screen_contactus.dart';
 import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
@@ -134,27 +136,30 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 3), () {
       final collRef = Singleton().db.collection("requests");
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
           Helpers.logD("send sms");
-          await _sendSMS(
-              message:
-                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
-              recipients: const ["1199"],
-              whenComplete: () async {
-                checkUSSD();
-                await Singleton().db.runTransaction((transaction) async {
-                  transaction.delete(value.docs[0].reference);
-                }).then((value) => {listen()});
-              },
-              whenError: (onError) {
-                setState(() {
-                  _error = onError.toString();
-                });
-                listen();
-              });
+          await Singleton().db.runTransaction((transaction) async {
+            transaction.delete(value.docs[0].reference);
+          }).then((value) => {listen()});
+          // await _sendSMS(
+          //     message:
+          //         "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+          //     recipients: const ["1199"],
+          //     whenComplete: () async {
+          //       checkUSSD();
+          //       await Singleton().db.runTransaction((transaction) async {
+          //         transaction.delete(value.docs[0].reference);
+          //       }).then((value) => {listen()});
+          //     },
+          //     whenError: (onError) {
+          //       setState(() {
+          //         _error = onError.toString();
+          //       });
+          //       listen();
+          //     });
         } else {
           listen();
         }
@@ -247,8 +252,10 @@ class _ScreenHome extends State<ScreenHome> {
                     .push(MaterialPageRoute(builder: (BuildContext context) {
                   if (index == 0) {
                     return ScreenHome();
-                  } else {
+                  } else if (index == 1) {
                     return ScreenPurchaseHistory();
+                  } else {
+                    return ScreenContactUs();
                   }
                 }));
               }
@@ -256,13 +263,13 @@ class _ScreenHome extends State<ScreenHome> {
           },
           selectedItemColor: primaryColor,
           unselectedItemColor: Colors.black,
-          items: Singleton().listOfBottomNavItems,
+          items: isClientPhone() ? Singleton().listOfBottomNavItems : Singleton().listOfBottomNavItemsSever,
           currentIndex: _selectedIndex,
         ),
         appBar: AppBar(
           leading: const Icon(Icons.store),
           title:
-              Text('LebUSSD', style: Theme.of(context).textTheme.displayLarge),
+              Text('Dolariz', style: Theme.of(context).textTheme.displayLarge),
           actions: [
             IconButton(
                 onPressed: () {
@@ -359,10 +366,6 @@ class _ScreenHome extends State<ScreenHome> {
                           ],
                         ),
                       ),
-                      const Text(
-                        "Alpha devices is currently not supported, but it will be soon. Stay tuned!",
-                        style: TextStyle(color: Colors.grey),
-                      ),
                       Visibility(
                           visible: !isClientPhone(),
                           child: SizedBox(
@@ -373,135 +376,163 @@ class _ScreenHome extends State<ScreenHome> {
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.displayLarge,
                               )))),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Text("For Me"),
-                              Checkbox(
-                                  value: _listOfInts.contains(1),
-                                  onChanged: _carrier != "Touch"
-                                      ? null
-                                      : (value) {
-                                          setState(() {
-                                            _listOfInts.removeLast();
-                                            _listOfInts.add(1);
-                                          });
-                                        }),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Text("For Other"),
-                              Checkbox(
-                                  value: _listOfInts.contains(2),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _listOfInts.removeLast();
-                                      _listOfInts.add(2);
-                                    });
-                                  })
-                            ],
-                          )
-                        ],
-                      ),
-                      Visibility(
-                        visible: _listOfInts.contains(2),
-                        maintainAnimation: true,
-                        maintainState: true,
-                        child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 1000),
-                            curve: Curves.fastOutSlowIn,
-                            opacity: _listOfInts.contains(2) ? 1 : 0,
-                            child: Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.phone,
-                                  enabled: _listOfInts.contains(2),
-                                  controller: _controllerOtherPhoneNumber,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _errorText = null;
-                                    });
-                                  },
-                                  decoration: InputDecoration(
-                                      enabledBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Colors.grey,
-                                              style: BorderStyle.solid),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10))),
-                                      labelText: 'Phone Number ex 81909560',
-                                      helperText:
-                                          "Phone number you wish to charge for.",
-                                      errorText: _errorText,
-                                      suffixIcon: IconButton(
-                                          onPressed: () async {
-                                            if (await Helpers
-                                                .requestContactPermission(
-                                                    context)) {
-                                              final PhoneContact contact =
-                                                  await FlutterContactPicker
-                                                      .pickPhoneContact();
-
-                                              setState(() {
-                                                if (contact.phoneNumber !=
-                                                    null) {
-                                                  _controllerOtherPhoneNumber
-                                                          .text =
-                                                      contact
-                                                          .phoneNumber!.number
-                                                          .toString()
-                                                          .replaceFirst(
-                                                              "+961", "")
-                                                          .replaceAll(" ", "");
-                                                }
-                                              });
-                                            }
-                                          },
-                                          icon: const Icon(Icons.contact_phone,
-                                              color: primaryColor)),
-                                      labelStyle: const TextStyle(
-                                          color: Colors.grey, fontSize: 13),
-                                      helperStyle: const TextStyle(
-                                          color: Colors.grey, fontSize: 13)),
-                                ))),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Visibility(
-                              visible: isClientPhone(),
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 50),
-                                child: Text(
-                                  'USSD Bundles:',
-                                  style:
-                                      Theme.of(context).textTheme.labelMedium,
-                                  textAlign: TextAlign.left,
-                                ),
-                              )),
-                          Visibility(
-                              visible: _listOfBundle.isEmpty,
-                              child: const Padding(
-                                padding: EdgeInsets.only(top: 50),
-                                child: Text("Loading Bundles..."),
-                              ))
-                        ],
-                      ),
                       Visibility(
                           visible: isClientPhone(),
-                          child: Padding(
-                              padding: const EdgeInsets.only(top: 20),
-                              child: Visibility(
-                                  visible: _listOfBundle.isNotEmpty,
-                                  child: Column(
-                                    children: listOfCards(),
-                                  ))))
+                          child: Column(
+                            children: [
+                              const Text(
+                                "Alpha phones are not currently supported, but it will be soon. Stay tuned!",
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text("For Me"),
+                                      Checkbox(
+                                          value: _listOfInts.contains(1),
+                                          onChanged: _carrier != "Touch"
+                                              ? null
+                                              : (value) {
+                                                  setState(() {
+                                                    _listOfInts.removeLast();
+                                                    _listOfInts.add(1);
+                                                  });
+                                                }),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Text("For Other"),
+                                      Checkbox(
+                                          value: _listOfInts.contains(2),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _listOfInts.removeLast();
+                                              _listOfInts.add(2);
+                                            });
+                                          })
+                                    ],
+                                  )
+                                ],
+                              ),
+                              Visibility(
+                                visible: _listOfInts.contains(2),
+                                maintainAnimation: true,
+                                maintainState: true,
+                                child: AnimatedOpacity(
+                                    duration:
+                                        const Duration(milliseconds: 1000),
+                                    curve: Curves.fastOutSlowIn,
+                                    opacity: _listOfInts.contains(2) ? 1 : 0,
+                                    child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            20, 20, 20, 0),
+                                        child: TextFormField(
+                                          keyboardType: TextInputType.phone,
+                                          enabled: _listOfInts.contains(2),
+                                          controller:
+                                              _controllerOtherPhoneNumber,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _errorText = null;
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                              enabledBorder:
+                                                  const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          width: 1,
+                                                          color: Colors.grey,
+                                                          style: BorderStyle
+                                                              .solid),
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  10))),
+                                              labelText:
+                                                  'Phone Number ex 81909560',
+                                              helperText:
+                                                  "Phone number you wish to charge for.",
+                                              errorText: _errorText,
+                                              suffixIcon: IconButton(
+                                                  onPressed: () async {
+                                                    if (await Helpers
+                                                        .requestContactPermission(
+                                                            context)) {
+                                                      final PhoneContact
+                                                          contact =
+                                                          await FlutterContactPicker
+                                                              .pickPhoneContact();
+
+                                                      setState(() {
+                                                        if (contact
+                                                                .phoneNumber !=
+                                                            null) {
+                                                          _controllerOtherPhoneNumber
+                                                                  .text =
+                                                              contact
+                                                                  .phoneNumber!
+                                                                  .number
+                                                                  .toString()
+                                                                  .replaceFirst(
+                                                                      "+961",
+                                                                      "")
+                                                                  .replaceAll(
+                                                                      " ", "");
+                                                        }
+                                                      });
+                                                    }
+                                                  },
+                                                  icon: const Icon(
+                                                      Icons.contact_phone,
+                                                      color: primaryColor)),
+                                              labelStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 13),
+                                              helperStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 13)),
+                                        ))),
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Visibility(
+                                      visible: isClientPhone(),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 50),
+                                        child: Text(
+                                          'USSD Bundles:',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium,
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      )),
+                                  Visibility(
+                                      visible: _listOfBundle.isEmpty,
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(top: 50),
+                                        child: Text("Loading Bundles..."),
+                                      ))
+                                ],
+                              ),
+                              Visibility(
+                                  visible: isClientPhone(),
+                                  child: Padding(
+                                      padding: const EdgeInsets.only(top: 20),
+                                      child: Visibility(
+                                          visible: _listOfBundle.isNotEmpty,
+                                          child: Column(
+                                            children: listOfCards(),
+                                          ))))
+                            ],
+                          ))
                     ],
                   ),
                 ],
@@ -512,12 +543,72 @@ class _ScreenHome extends State<ScreenHome> {
   List<Widget> listOfCards() {
     List<Widget> list = [];
     for (int i = 0; i < _listOfBundle.length; i++) {
-      list.add(Padding(
-        padding: const EdgeInsets.only(top: 30),
-        child: item(_listOfBundle[i]),
-      ));
+      if (i == 0) {
+        list.add(Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: item(_listOfBundle[i]),
+        ));
+      } else {
+        list.add(Padding(
+          padding: const EdgeInsets.only(top: 30),
+          child: item(_listOfBundle[i]),
+        ));
+      }
     }
     return list;
+  }
+
+  void purchaseAndCharge(
+      ModelBundle modelBundle, Package package, bool forOther) async {
+    String phoneNumber = forOther
+        ? _controllerOtherPhoneNumber.text
+            .replaceFirst("+", "")
+            .replaceFirst("961", "")
+        : Singleton()
+            .firebaseAuth
+            .currentUser!
+            .phoneNumber!
+            .replaceFirst("+961", "");
+
+    Purchases.purchasePackage(package).then((value) {
+      // payment is successful
+      DateTime now = DateTime.now();
+      String date =
+          "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+      SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
+          id: 0,
+          bundle: modelBundle.bundle,
+          price: modelBundle.price,
+          date: date,
+          color: modelBundle.color,
+          phoneNumber: phoneNumber));
+      sendChargeRequest(
+          modelBundle,
+          int.parse(_controllerOtherPhoneNumber.text
+              .replaceFirst("+", "")
+              .replaceFirst("961", "")), () {
+        if (context.mounted) {
+          HelperDialog().showDialogInfo(
+              "Success!",
+              forOther
+                  ? "Bundle has been charged to the desired phone number"
+                  : "Bundle has been charged to your phone number",
+              context,
+              true, () {
+            Navigator.pop(context);
+          });
+        }
+      });
+    }).onError((error, stackTrace) {
+      // Payment failed
+      HelperDialog().showDialogInfo(
+          "Warning!",
+          "Purchase failed, make sure you entered the correct card details and you have enough money!",
+          context,
+          true, () {
+        Navigator.pop(context);
+      });
+    });
   }
 
   Widget item(ModelBundle modelBundle) {
@@ -559,47 +650,7 @@ class _ScreenHome extends State<ScreenHome> {
                         for (var package in listOfPackages) {
                           if (package.identifier ==
                               "ussd_${modelBundle.bundle}") {
-                            Purchases.purchasePackage(package).then((value) {
-                              // payment is successful
-                              DateTime now = DateTime.now();
-                              String date =
-                                  "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-                              SqliteActions().insertPurchaseHistory(
-                                  ModelPurchaseHistory(
-                                      id: 0,
-                                      bundle: modelBundle.bundle,
-                                      price: modelBundle.price,
-                                      date: date,
-                                      color: modelBundle.color,
-                                      phoneNumber: _controllerOtherPhoneNumber
-                                          .text
-                                          .replaceFirst("+", "")
-                                          .replaceFirst("961", "")));
-                              sendChargeRequest(
-                                  modelBundle,
-                                  int.parse(_controllerOtherPhoneNumber.text
-                                      .replaceFirst("+", "")
-                                      .replaceFirst("961", "")), () {
-                                if (context.mounted) {
-                                  HelperDialog().showDialogInfo(
-                                      "Success!",
-                                      "Bundle has been charged to the desired phone number",
-                                      context,
-                                      true, () {
-                                    Navigator.pop(context);
-                                  });
-                                }
-                              });
-                            }).onError((error, stackTrace) {
-                              // Payment failed
-                              HelperDialog().showDialogInfo(
-                                  "Warning!",
-                                  "Purchase failed, make sure you entered the correct card details and you have enough money!",
-                                  context,
-                                  true, () {
-                                Navigator.pop(context);
-                              });
-                            });
+                            purchaseAndCharge(modelBundle, package, true);
                             return;
                           }
                         }
@@ -609,48 +660,7 @@ class _ScreenHome extends State<ScreenHome> {
                       for (var package in listOfPackages) {
                         if (package.identifier ==
                             "ussd_${modelBundle.bundle}") {
-                          Purchases.purchasePackage(package).then((value) {
-                            DateTime now = DateTime.now();
-                            String date =
-                                "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-                            SqliteActions().insertPurchaseHistory(
-                                ModelPurchaseHistory(
-                                    id: 0,
-                                    bundle: modelBundle.bundle,
-                                    price: modelBundle.price,
-                                    date: date,
-                                    color: modelBundle.color,
-                                    phoneNumber: Singleton()
-                                        .firebaseAuth
-                                        .currentUser!
-                                        .phoneNumber!
-                                        .replaceFirst("+961", "")));
-                            sendChargeRequest(
-                                modelBundle,
-                                int.parse(Singleton()
-                                    .firebaseAuth
-                                    .currentUser!
-                                    .phoneNumber!
-                                    .replaceFirst("+961", "")), () {
-                              if (context.mounted) {
-                                HelperDialog().showDialogInfo(
-                                    "Success!",
-                                    "Bundle has been charged to your phone number",
-                                    context,
-                                    true, () {
-                                  Navigator.pop(context);
-                                });
-                              }
-                            });
-                          }).onError((error, stackTrace) {
-                            HelperDialog().showDialogInfo(
-                                "Warning!",
-                                "Purchase failed, make sure you entered the correct card details and you have enough money!",
-                                context,
-                                true, () {
-                              Navigator.pop(context);
-                            });
-                          });
+                          purchaseAndCharge(modelBundle, package, false);
                           return;
                         }
                       }
@@ -686,7 +696,7 @@ class _ScreenHome extends State<ScreenHome> {
                 backgroundColor: MaterialStateProperty.all<Color>(primaryColor),
                 shape: MaterialStateProperty.all<OutlinedBorder>(
                     ContinuousRectangleBorder(
-                        borderRadius: BorderRadius.circular(50))),
+                        borderRadius: BorderRadius.circular(20))),
                 minimumSize: MaterialStateProperty.all<Size>(
                     Size(MediaQuery.of(context).size.width - 50, 50)),
               ),
