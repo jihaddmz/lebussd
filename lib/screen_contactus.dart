@@ -72,7 +72,7 @@ class _ScreenContactUs extends State<ScreenContactUs> {
                     minimumSize: MaterialStateProperty.all<Size>(
                         Size(MediaQuery.of(context).size.width - 50, 50)),
                   ),
-                  child: const Text("Submit", style: TextStyle(fontSize: 20)),
+                  child: const Text("Submit", style: TextStyle(fontSize: 18)),
                 ),
                 Text(
                   _errorText ?? "",

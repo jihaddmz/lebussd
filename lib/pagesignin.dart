@@ -165,7 +165,7 @@ class _SigninPage extends State<SigninPage> {
                       Size(MediaQuery.of(context).size.width - 50, 50)),
                 ),
                 child: Text(_isCodeSent ? 'Verify Code' : 'Sign Up',
-                    style: const TextStyle(fontSize: 20)),
+                    style: const TextStyle(fontSize: 18)),
               )),
         ),
         body: SingleChildScrollView(
