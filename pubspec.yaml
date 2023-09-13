@@ -42,7 +42,6 @@ dependencies:
   ussd_service: ^0.1.1
   flutter_sms: ^2.3.3
   permission_handler: ^10.4.3
-  connectivity_plus: ^4.0.2
   dart_ping: ^9.0.0
   rxdart: ^0.27.1
   path_provider_android: ^2.1.0

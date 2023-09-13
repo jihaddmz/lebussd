@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,6 @@ import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
-import 'package:lebussd/components/options_selector.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
@@ -18,7 +18,6 @@ import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
 import 'package:lottie/lottie.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:ussd_service/ussd_service.dart';
@@ -42,9 +41,10 @@ class _ScreenHome extends State<ScreenHome> {
   late List<Package> listOfPackages;
   String? _errorText;
 
-  _ScreenHome() {
+  @override
+  void initState() {
+    super.initState();
     if (!isClientPhone()) {
-      // if (false) {
       // it is the server phone number
       checkUSSD();
       listen();
@@ -136,7 +136,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 1), () {
       final collRef = Singleton().db.collection("requests");
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
@@ -207,8 +207,8 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    // return Singleton().firebaseAuth.currentUser!.phoneNumber !=
-    //     Singleton().serverPhoneNumber;
+    return Singleton().firebaseAuth.currentUser!.phoneNumber !=
+        Singleton().serverPhoneNumber;
     return true;
   }
 
@@ -263,7 +263,7 @@ class _ScreenHome extends State<ScreenHome> {
           },
           selectedItemColor: primaryColor,
           unselectedItemColor: Colors.black,
-          items: isClientPhone() ? Singleton().listOfBottomNavItems : Singleton().listOfBottomNavItemsSever,
+          items: Singleton().listOfBottomNavItems,
           currentIndex: _selectedIndex,
         ),
         appBar: AppBar(
@@ -649,7 +649,7 @@ class _ScreenHome extends State<ScreenHome> {
                         }
                         for (var package in listOfPackages) {
                           if (package.identifier ==
-                              "ussd_${modelBundle.bundle}") {
+                              "ussd_${modelBundle.bundle.toString().replaceFirst(".0", "")}") {
                             purchaseAndCharge(modelBundle, package, true);
                             return;
                           }
@@ -659,7 +659,7 @@ class _ScreenHome extends State<ScreenHome> {
                       // charging for current phone number
                       for (var package in listOfPackages) {
                         if (package.identifier ==
-                            "ussd_${modelBundle.bundle}") {
+                            "ussd_${modelBundle.bundle.toString().replaceFirst(".0", "")}") {
                           purchaseAndCharge(modelBundle, package, false);
                           return;
                         }
@@ -670,7 +670,7 @@ class _ScreenHome extends State<ScreenHome> {
                     if (context.mounted) {
                       HelperDialog().showDialogInfo(
                           "Attention!",
-                          "There is something wrong on our end, we're working on it!. Please try again later",
+                          "There is something wrong on our end, we're working on it!. Please try again later.",
                           context,
                           true, () {
                         Navigator.pop(context);
