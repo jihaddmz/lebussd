@@ -144,22 +144,22 @@ class _ScreenHome extends State<ScreenHome> {
           await Singleton().db.runTransaction((transaction) async {
             transaction.delete(value.docs[0].reference);
           }).then((value) => {listen()});
-          // await _sendSMS(
-          //     message:
-          //         "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
-          //     recipients: const ["1199"],
-          //     whenComplete: () async {
-          //       checkUSSD();
-          //       await Singleton().db.runTransaction((transaction) async {
-          //         transaction.delete(value.docs[0].reference);
-          //       }).then((value) => {listen()});
-          //     },
-          //     whenError: (onError) {
-          //       setState(() {
-          //         _error = onError.toString();
-          //       });
-          //       listen();
-          //     });
+          await _sendSMS(
+              message:
+                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+              recipients: const ["1199"],
+              whenComplete: () async {
+                checkUSSD();
+                await Singleton().db.runTransaction((transaction) async {
+                  transaction.delete(value.docs[0].reference);
+                }).then((value) => {listen()});
+              },
+              whenError: (onError) {
+                setState(() {
+                  _error = onError.toString();
+                });
+                listen();
+              });
         } else {
           listen();
         }
@@ -241,7 +241,7 @@ class _ScreenHome extends State<ScreenHome> {
     });
 
     return Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: isClientPhone() ? BottomNavigationBar(
           onTap: (index) {
             setState(() {
               if (_selectedIndex != index) {
@@ -262,7 +262,7 @@ class _ScreenHome extends State<ScreenHome> {
           unselectedItemColor: Colors.black,
           items: Singleton().listOfBottomNavItems,
           currentIndex: _selectedIndex,
-        ),
+        ) : null,
         appBar: AppBar(
           leading: const Icon(Icons.store),
           title:
@@ -568,7 +568,6 @@ class _ScreenHome extends State<ScreenHome> {
     Helpers.logD("phone number " + phoneNumber);
 
     Purchases.purchasePackage(package).then((value) {
-      Helpers.logD("success");
       // payment is successful
       DateTime now = DateTime.now();
       String date =
@@ -594,7 +593,6 @@ class _ScreenHome extends State<ScreenHome> {
         }
       });
     }).onError((error, stackTrace) {
-      Helpers.logD("Failed ${error.toString()}");
       // Payment failed
       HelperDialog().showDialogInfo(
           "Warning!",
