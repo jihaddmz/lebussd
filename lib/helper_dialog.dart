@@ -40,9 +40,6 @@ class HelperDialog {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Lottie.asset('assets/loading.json', animate: true),
-                      // Container(
-                      //     margin: const EdgeInsets.only(left: 20),
-                      //     child: const Text("Loading...")),
                     ],
                   )));
         });

@@ -1,17 +1,14 @@
+import 'package:lebussd/singleton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HelperSharedPreferences {
 
-  static void setString(String key, String value) async {
-    // Obtain shared preferences.
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
+  static Future<void> setString(String key, String value) async {
 // Save an integer value to 'counter' key.
-    await prefs.setString(key, value);
+    await Singleton().sharedPreferences.setString(key, value);
   }
 
-  static Future<String?> getString(String key) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(key);
+  static String getString(String key) {
+    return Singleton().sharedPreferences.getString(key) ?? "";
   }
 }

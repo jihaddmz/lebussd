@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'models/model_bundle.dart';
@@ -16,11 +16,11 @@ class Singleton {
     // initialization logic
   }
 
-  final String serverPhoneNumber = "+96181909560";
+  final String serverPhoneNumber = "81909560";
   final double transferTax = 0.16;
 
-  late FirebaseAuth firebaseAuth;
   late FirebaseFirestore db;
+  late SharedPreferences sharedPreferences;
   List<ModelBundle> listOfBundle = [];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
     const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),

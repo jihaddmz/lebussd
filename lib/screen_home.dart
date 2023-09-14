@@ -207,21 +207,19 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    return Singleton().firebaseAuth.currentUser!.phoneNumber !=
-        Singleton().serverPhoneNumber;
+    // return HelperSharedPreferences.getString("phone_number") !=
+    //     Singleton().serverPhoneNumber;
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    HelperSharedPreferences.getString("carrier").then((value) => {
-          setState(() {
-            _carrier = value ?? "";
-            if (_carrier != "Touch") {
-              _listOfInts.add(2);
-            }
-          })
-        });
+    setState(() {
+      _carrier = HelperSharedPreferences.getString("carrier");
+      if (_carrier != "Touch") {
+        _listOfInts.add(2);
+      }
+    });
 
     HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
       listOfPackages = offering.availablePackages;
@@ -276,12 +274,14 @@ class _ScreenHome extends State<ScreenHome> {
                   HelperDialog().showDialogAffirmation(
                       context, "Attention", "Are you sure you want to logout?",
                       () {
-                    Singleton().firebaseAuth.signOut();
-                    Navigator.pop(context);
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (context) => ScreenWelcome()),
-                        (route) => false);
+                    HelperSharedPreferences.setString("phone_number", "")
+                        .then((value) {
+                      Navigator.pop(context);
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (context) => ScreenWelcome()),
+                          (route) => false);
+                    });
                   }, () {
                     Navigator.pop(context);
                   });
@@ -564,11 +564,7 @@ class _ScreenHome extends State<ScreenHome> {
         ? _controllerOtherPhoneNumber.text
             .replaceFirst("+", "")
             .replaceFirst("961", "")
-        : Singleton()
-            .firebaseAuth
-            .currentUser!
-            .phoneNumber!
-            .replaceFirst("+961", "");
+        : HelperSharedPreferences.getString("phone_number");
 
     Purchases.purchasePackage(package).then((value) {
       // payment is successful
