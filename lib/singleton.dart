@@ -16,7 +16,7 @@ class Singleton {
     // initialization logic
   }
 
-  final String serverPhoneNumber = "81909560";
+  final String serverPhoneNumber = "81909560"; // 70936314
   final double transferTax = 0.16;
 
   late FirebaseFirestore db;

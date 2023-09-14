@@ -207,9 +207,8 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    // return HelperSharedPreferences.getString("phone_number") !=
-    //     Singleton().serverPhoneNumber;
-    return true;
+    return HelperSharedPreferences.getString("phone_number") !=
+        Singleton().serverPhoneNumber;
   }
 
   @override
@@ -566,7 +565,10 @@ class _ScreenHome extends State<ScreenHome> {
             .replaceFirst("961", "")
         : HelperSharedPreferences.getString("phone_number");
 
+    Helpers.logD("phone number " + phoneNumber);
+
     Purchases.purchasePackage(package).then((value) {
+      Helpers.logD("success");
       // payment is successful
       DateTime now = DateTime.now();
       String date =
@@ -578,11 +580,7 @@ class _ScreenHome extends State<ScreenHome> {
           date: date,
           color: modelBundle.color,
           phoneNumber: phoneNumber));
-      sendChargeRequest(
-          modelBundle,
-          int.parse(_controllerOtherPhoneNumber.text
-              .replaceFirst("+", "")
-              .replaceFirst("961", "")), () {
+      sendChargeRequest(modelBundle, int.parse(phoneNumber), () {
         if (context.mounted) {
           HelperDialog().showDialogInfo(
               "Success!",
@@ -596,6 +594,7 @@ class _ScreenHome extends State<ScreenHome> {
         }
       });
     }).onError((error, stackTrace) {
+      Helpers.logD("Failed ${error.toString()}");
       // Payment failed
       HelperDialog().showDialogInfo(
           "Warning!",
