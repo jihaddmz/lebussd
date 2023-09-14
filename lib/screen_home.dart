@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -33,10 +32,13 @@ class ScreenHome extends StatefulWidget {
 class _ScreenHome extends State<ScreenHome> {
   double _availableUSSD = 0.0;
   String _carrier = "Touch";
-  String _error = "";
-  int _selectedIndex = 0;
-  List<int> _listOfInts = [1];
-  TextEditingController _controllerOtherPhoneNumber = TextEditingController();
+  String _error =
+      ""; // error happened on the server phone during charging for the client
+  String _chargingText = "";
+  final int _selectedIndex = 0;
+  final List<int> _listOfInts = [1];
+  final TextEditingController _controllerOtherPhoneNumber =
+      TextEditingController();
   List<ModelBundle> _listOfBundle = [];
   late List<Package> listOfPackages;
   String? _errorText;
@@ -75,7 +77,7 @@ class _ScreenHome extends State<ScreenHome> {
           Navigator.pop(context);
         }
       }
-    }, onError: (error) => print("Listen failed: $error"));
+    }, onError: (error) => {});
   }
 
   /// method for server
@@ -136,30 +138,37 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
+    if (_chargingText.isNotEmpty) {
+      setState(() {
+        _chargingText = "";
+      });
+    }
     Future.delayed(const Duration(seconds: 1), () {
       final collRef = Singleton().db.collection("requests");
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
-          Helpers.logD("send sms");
+          setState(() {
+            _chargingText = "Charging ${value.docs[0].get("bundle")} for ${value.docs[0].get("phoneNumber")}";
+          });
           await Singleton().db.runTransaction((transaction) async {
             transaction.delete(value.docs[0].reference);
           }).then((value) => {listen()});
-          await _sendSMS(
-              message:
-                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
-              recipients: const ["1199"],
-              whenComplete: () async {
-                checkUSSD();
-                await Singleton().db.runTransaction((transaction) async {
-                  transaction.delete(value.docs[0].reference);
-                }).then((value) => {listen()});
-              },
-              whenError: (onError) {
-                setState(() {
-                  _error = onError.toString();
-                });
-                listen();
-              });
+          // await _sendSMS(
+          //     message:
+          //         "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+          //     recipients: const ["1199"],
+          //     whenComplete: () async {
+          //       checkUSSD();
+          //       await Singleton().db.runTransaction((transaction) async {
+          //         transaction.delete(value.docs[0].reference);
+          //       }).then((value) => {listen()});
+          //     },
+          //     whenError: (onError) {
+          //       setState(() {
+          //         _error = onError.toString();
+          //       });
+          //       listen();
+          //     });
         } else {
           listen();
         }
@@ -241,28 +250,30 @@ class _ScreenHome extends State<ScreenHome> {
     });
 
     return Scaffold(
-        bottomNavigationBar: isClientPhone() ? BottomNavigationBar(
-          onTap: (index) {
-            setState(() {
-              if (_selectedIndex != index) {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (BuildContext context) {
-                  if (index == 0) {
-                    return ScreenHome();
-                  } else if (index == 1) {
-                    return ScreenPurchaseHistory();
-                  } else {
-                    return ScreenContactUs();
-                  }
-                }));
-              }
-            });
-          },
-          selectedItemColor: primaryColor,
-          unselectedItemColor: Colors.black,
-          items: Singleton().listOfBottomNavItems,
-          currentIndex: _selectedIndex,
-        ) : null,
+        bottomNavigationBar: isClientPhone()
+            ? BottomNavigationBar(
+                onTap: (index) {
+                  setState(() {
+                    if (_selectedIndex != index) {
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (BuildContext context) {
+                        if (index == 0) {
+                          return ScreenHome();
+                        } else if (index == 1) {
+                          return ScreenPurchaseHistory();
+                        } else {
+                          return ScreenContactUs();
+                        }
+                      }));
+                    }
+                  });
+                },
+                selectedItemColor: primaryColor,
+                unselectedItemColor: Colors.black,
+                items: Singleton().listOfBottomNavItems,
+                currentIndex: _selectedIndex,
+              )
+            : null,
         appBar: AppBar(
           leading: const Icon(Icons.store),
           title:
@@ -365,6 +376,12 @@ class _ScreenHome extends State<ScreenHome> {
                           ],
                         ),
                       ),
+                      Visibility(
+                          visible: !isClientPhone(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 20),
+                            child: Text(_chargingText, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),),
+                          )),
                       Visibility(
                           visible: !isClientPhone(),
                           child: SizedBox(
@@ -564,8 +581,6 @@ class _ScreenHome extends State<ScreenHome> {
             .replaceFirst("+", "")
             .replaceFirst("961", "")
         : HelperSharedPreferences.getString("phone_number");
-
-    Helpers.logD("phone number " + phoneNumber);
 
     Purchases.purchasePackage(package).then((value) {
       // payment is successful
