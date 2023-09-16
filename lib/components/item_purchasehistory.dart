@@ -10,7 +10,7 @@ Widget itemPurchaseHistory(ModelPurchaseHistory modelPurchaseHistory) {
     mainAxisSize: MainAxisSize.max,
     children: [
       itemRechargeCard(ModelBundle(modelPurchaseHistory.price,
-          modelPurchaseHistory.bundle, modelPurchaseHistory.color)),
+          modelPurchaseHistory.bundle, modelPurchaseHistory.color, modelPurchaseHistory.isTouch)),
       Padding(
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
         child: Column(

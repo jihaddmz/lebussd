@@ -7,6 +7,7 @@ class ModelPurchaseHistory {
   final String phoneNumber;
   final String date;
   final String color;
+  final bool isTouch;
 
   const ModelPurchaseHistory(
       {required this.id,
@@ -14,7 +15,8 @@ class ModelPurchaseHistory {
       required this.price,
       required this.date,
       required this.color,
-      required this.phoneNumber});
+      required this.phoneNumber,
+      required this.isTouch});
 
   Map<String, dynamic> toMap(int id) {
     return {
@@ -23,12 +25,13 @@ class ModelPurchaseHistory {
       'price': price,
       'date': date,
       'color': color,
-      'phoneNumber': phoneNumber
+      'phoneNumber': phoneNumber,
+      'isTouch': isTouch
     };
   }
 
   @override
   String toString() {
-    return 'ModelPurchaseHistory{id: $id, bundle: $bundle, price: $price, date: $date, color: $color, phoneNumber: $phoneNumber}';
+    return 'ModelPurchaseHistory{id: $id, bundle: $bundle, price: $price, date: $date, color: $color, phoneNumber: $phoneNumber, isTouch: $isTouch}';
   }
 }

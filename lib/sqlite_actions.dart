@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 class SqliteActions {
   Future<void> createPurchaseHistoryTable(Database db) async {
     await db.execute(
-        "create table purchase_history (id integer primary key, bundle double, price double, date text, color text, phoneNumber text)");
+        "create table purchase_history (id integer primary key, bundle double, price double, date text, color text, phoneNumber text, isTouch bool)");
   }
 
   Future<void> insertPurchaseHistory(
@@ -26,7 +26,8 @@ class SqliteActions {
           price: listOfRecords[index]['price'],
           date: listOfRecords[index]['date'],
           color: listOfRecords[index]['color'],
-          phoneNumber: listOfRecords[index]['phoneNumber']);
+          phoneNumber: listOfRecords[index]['phoneNumber'],
+        isTouch: listOfRecords[index]['isTouch']);
     });
   }
 

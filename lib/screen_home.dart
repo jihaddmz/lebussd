@@ -240,17 +240,17 @@ class _ScreenHome extends State<ScreenHome> {
         setState(() {
           _listOfBundle = [
             ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                0.5, "0xffFFCC00"),
+                0.5, "0xffFFCC00", true),
             ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                "0xffFF3B30"),
+                "0xffFF3B30", true),
             ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                1.5, "0xffFF9500"),
+                1.5, "0xffFF9500", true),
             ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                "0xff4CD964"),
+                "0xff4CD964", true),
             ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                2.5, "0xff5AC8FA"),
+                2.5, "0xff5AC8FA", true),
             ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                "0xff5856D6"),
+                "0xff5856D6", true),
           ];
         });
       });
@@ -605,7 +605,8 @@ class _ScreenHome extends State<ScreenHome> {
           price: modelBundle.price,
           date: date,
           color: modelBundle.color,
-          phoneNumber: phoneNumber));
+          phoneNumber: phoneNumber,
+          isTouch: modelBundle.isTouch));
       sendChargeRequest(modelBundle, int.parse(phoneNumber), () {
         if (context.mounted) {
           Navigator.pop(context);
