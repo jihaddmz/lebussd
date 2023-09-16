@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lebussd/pagesignin.dart';
+import 'package:lebussd/singleton.dart';
 
 class ScreenWelcome extends StatefulWidget {
   ScreenWelcome({super.key});
@@ -85,7 +86,7 @@ class FirstPage extends StatelessWidget {
                 vertical: MediaQuery.of(context).size.height * 0.1,
                 horizontal: MediaQuery.of(context).size.width * 0.01),
             child: const Image(image: AssetImage('images/img_welcome.png'))),
-        Text("LebUSSD", style: Theme.of(context).textTheme.displayLarge),
+        Text(Singleton().appName, style: Theme.of(context).textTheme.displayLarge),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
           child: Text(

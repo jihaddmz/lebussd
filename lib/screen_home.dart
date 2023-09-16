@@ -92,10 +92,11 @@ class _ScreenHome extends State<ScreenHome> {
         subscriptionId,
         code,
         const Duration(
-            seconds: 10), // timeout (optional) - default is 10 seconds
+            seconds: 60), // timeout (optional) - default is 10 seconds
       );
       if (onResponseResult != null) onResponseResult(ussdResponseMessage);
       String onDeviceUSSD = ussdResponseMessage.split(" ")[1];
+      Helpers.logD("Entered");
       Singleton()
           .db
           .collection("app")
@@ -148,27 +149,31 @@ class _ScreenHome extends State<ScreenHome> {
       collRef.get().then((value) async {
         if (value.docs.isNotEmpty) {
           setState(() {
-            _chargingText = "Charging ${value.docs[0].get("bundle")} for ${value.docs[0].get("phoneNumber")}";
+            _error = "";
+            _chargingText =
+                "Charging ${value.docs[0].get("bundle")} for ${value.docs[0].get("phoneNumber")}";
           });
-          await Singleton().db.runTransaction((transaction) async {
-            transaction.delete(value.docs[0].reference);
-          }).then((value) => {listen()});
-          // await _sendSMS(
-          //     message:
-          //         "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
-          //     recipients: const ["1199"],
-          //     whenComplete: () async {
-          //       checkUSSD();
-          //       await Singleton().db.runTransaction((transaction) async {
-          //         transaction.delete(value.docs[0].reference);
-          //       }).then((value) => {listen()});
-          //     },
-          //     whenError: (onError) {
-          //       setState(() {
-          //         _error = onError.toString();
-          //       });
-          //       listen();
-          //     });
+          // await Singleton().db.runTransaction((transaction) async {
+          //   transaction.delete(value.docs[0].reference);
+          // }).then((value) => {listen()});
+          await _sendSMS(
+              message:
+                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+              recipients: const ["1199"],
+              whenComplete: () async {
+                await Singleton().db.runTransaction((transaction) async {
+                  transaction.delete(value.docs[0].reference);
+                }).then((value) {
+                  checkUSSD();
+                  listen();
+                });
+              },
+              whenError: (onError) {
+                setState(() {
+                  _error = onError.toString();
+                });
+                listen();
+              });
         } else {
           listen();
         }
@@ -229,25 +234,27 @@ class _ScreenHome extends State<ScreenHome> {
       }
     });
 
-    HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
-      listOfPackages = offering.availablePackages;
-      setState(() {
-        _listOfBundle = [
-          ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price, 0.5,
-              "0xffFFCC00"),
-          ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-              "0xffFF3B30"),
-          ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price, 1.5,
-              "0xffFF9500"),
-          ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-              "0xff4CD964"),
-          ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price, 2.5,
-              "0xff5AC8FA"),
-          ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-              "0xff5856D6"),
-        ];
+    if (isClientPhone()) {
+      HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
+        listOfPackages = offering.availablePackages;
+        setState(() {
+          _listOfBundle = [
+            ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
+                0.5, "0xffFFCC00"),
+            ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
+                "0xffFF3B30"),
+            ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
+                1.5, "0xffFF9500"),
+            ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
+                "0xff4CD964"),
+            ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
+                2.5, "0xff5AC8FA"),
+            ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
+                "0xff5856D6"),
+          ];
+        });
       });
-    });
+    }
 
     return Scaffold(
         bottomNavigationBar: isClientPhone()
@@ -276,14 +283,13 @@ class _ScreenHome extends State<ScreenHome> {
             : null,
         appBar: AppBar(
           leading: const Icon(Icons.store),
-          title:
-              Text('Dolariz', style: Theme.of(context).textTheme.displayLarge),
+          title: Text(Singleton().appName,
+              style: Theme.of(context).textTheme.displayLarge),
           actions: [
             IconButton(
                 onPressed: () {
-                  HelperDialog().showDialogAffirmation(
-                      context, "Attention", "Are you sure you want to logout?",
-                      () {
+                  HelperDialog().showDialogAffirmation(context, "Attention",
+                      "Are you sure you want to sign out?", () {
                     HelperSharedPreferences.setString("phone_number", "")
                         .then((value) {
                       Navigator.pop(context);
@@ -307,7 +313,7 @@ class _ScreenHome extends State<ScreenHome> {
                 children: [
                   // Load a Lottie file from your assets
                   Visibility(
-                      visible: _listOfBundle.isEmpty,
+                      visible: _listOfBundle.isEmpty && isClientPhone(),
                       child:
                           Lottie.asset('assets/loading.json', animate: true)),
                   Column(
@@ -380,7 +386,12 @@ class _ScreenHome extends State<ScreenHome> {
                           visible: !isClientPhone(),
                           child: Padding(
                             padding: const EdgeInsets.only(top: 20),
-                            child: Text(_chargingText, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),),
+                            child: Text(
+                              _chargingText,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 17),
+                            ),
                           )),
                       Visibility(
                           visible: !isClientPhone(),
@@ -583,6 +594,7 @@ class _ScreenHome extends State<ScreenHome> {
         : HelperSharedPreferences.getString("phone_number");
 
     Purchases.purchasePackage(package).then((value) {
+      HelperDialog().showLoaderDialog(context);
       // payment is successful
       DateTime now = DateTime.now();
       String date =
@@ -596,11 +608,12 @@ class _ScreenHome extends State<ScreenHome> {
           phoneNumber: phoneNumber));
       sendChargeRequest(modelBundle, int.parse(phoneNumber), () {
         if (context.mounted) {
+          Navigator.pop(context);
           HelperDialog().showDialogInfo(
               "Success!",
               forOther
-                  ? "Bundle has been charged to the desired phone number"
-                  : "Bundle has been charged to your phone number",
+                  ? "Bundle has been charged to the desired phone number.\n\nNote: If bundle hasn't been added to your balance 5 minutes by max, please contact us in the contact section, and select the Bundle option."
+                  : "Bundle has been charged to your phone number.\n\nNote: If bundle hasn't been added to your balance 5 minutes by max, please contact us in the contact section, and select the Bundle option.",
               context,
               true, () {
             Navigator.pop(context);

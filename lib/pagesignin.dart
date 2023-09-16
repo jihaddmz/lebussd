@@ -80,7 +80,7 @@ class _SigninPage extends State<SigninPage> {
                     width: MediaQuery.of(context).size.width * 0.7,
                     height: MediaQuery.of(context).size.height * 0.4)),
             Text(
-              "Lebanon USSD Store",
+              "Charge Anytime Anywhere",
               style: Theme.of(context).textTheme.displayLarge,
               textAlign: TextAlign.center,
             ),
