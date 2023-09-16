@@ -408,7 +408,7 @@ class _ScreenHome extends State<ScreenHome> {
                           child: Column(
                             children: [
                               const Text(
-                                "Alpha phones are not currently supported, but it will be soon. Stay tuned!",
+                                "Alpha phones are not currently supported, but they will be soon. Stay tuned!",
                                 style: TextStyle(color: Colors.grey),
                               ),
                               Row(
