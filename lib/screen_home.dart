@@ -130,7 +130,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// method for server
   /// checking the on device available ussd and set it to firestore, so the client can fetch it
   ///
-  void checkUSSD(
+  Future<void> checkUSSD(
       {Function(String)? onResponseResult, Function? onResponseError}) async {
     int subscriptionId = 1; // sim card subscription ID
     String code = "*220#"; // ussd code payload
@@ -185,9 +185,9 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 1), () async {
       final collRef = Singleton().db.collection("requests");
-      collRef.get().then((collection) async {
+      await collRef.get().then((collection) async {
         if (collection.docs.isNotEmpty) {
           setState(() {
             _error = "";
@@ -200,22 +200,21 @@ class _ScreenHome extends State<ScreenHome> {
               whenComplete: () async {
                 await Singleton().db.runTransaction((transaction) async {
                   transaction.delete(collection.docs[0].reference);
-                }).then((value) {
-                  checkUSSD();
+                }).then((value) async {
+                  await checkUSSD();
                   DateTime now = DateTime.now();
                   String date =
                       "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
                   ModelServerChargeHistory modelServerChargeHistory =
                       ModelServerChargeHistory(
                           0,
-                          collection.docs[0].get("bundle"),
+                          double.parse(collection.docs[0].get("bundle")),
                           collection.docs[0].get("phoneNumber").toString(),
                           1,
                           date);
-                  SqliteActions()
+                  await SqliteActions()
                       .insertServerChargeHistory(modelServerChargeHistory)
-                      .onError((error, stackTrace) {
-                  });
+                      .onError((error, stackTrace) {});
                   setState(() {
                     _listOfServerChargeHistory.insert(
                         0, modelServerChargeHistory);
@@ -248,7 +247,8 @@ class _ScreenHome extends State<ScreenHome> {
       ModelBundle modelBundle, int phoneNumber, Function whenComplete) {
     Map<String, dynamic> data = HashMap();
     data["phoneNumber"] = phoneNumber;
-    data["bundle"] = modelBundle.bundle;
+    data["bundle"] = modelBundle.bundle.toString().replaceFirst(".0", "");
+    Helpers.logD("${modelBundle.bundle}");
     var collRef = Singleton().db.collection("requests");
     collRef
         .doc()
@@ -444,10 +444,10 @@ class _ScreenHome extends State<ScreenHome> {
                           visible: isClientPhone(),
                           child: Column(
                             children: [
-                              const Text(
-                                "Alpha phones are not currently supported, but they will be soon. Stay tuned!",
-                                style: TextStyle(color: Colors.grey),
-                              ),
+                              // const Text(
+                              //   "Alpha phones are not currently supported, but they will be soon. Stay tuned!",
+                              //   style: TextStyle(color: Colors.grey),
+                              // ),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -690,8 +690,9 @@ class _ScreenHome extends State<ScreenHome> {
                 // if (await Helpers.requestSMSPermission(context)) {
                 if (Singleton().isConnected) {
                   // there is network access
-                  if (modelBundle.bundle + Singleton().transferTax + 1 <=
-                      _availableUSSD) {
+                  if (_availableUSSD > 1.3 &&
+                      modelBundle.bundle + Singleton().transferTax <=
+                          _availableUSSD) {
                     // this bundle can be charged, there is enough credits
                     if (_listOfInts.contains(2)) {
                       // user is charging for other phone number

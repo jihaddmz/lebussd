@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
 <!--               comment for client             -->
-    <uses-permission android:name="android.permission.SEND_SMS"/>
+<!--    <uses-permission android:name="android.permission.SEND_SMS"/>-->
 
     <queries>
         <intent>
