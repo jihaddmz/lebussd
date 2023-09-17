@@ -1,6 +1,3 @@
-import 'dart:ffi';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:lebussd/models/model_bundle.dart';
 
@@ -23,6 +20,13 @@ Widget itemRechargeCard(ModelBundle modelBundle) {
                 padding: EdgeInsets.only(left: 10),
                 child: Text(
                   "Recharge Card",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(left: 20),
+                child: Text(
+                  "Including V.A.T",
                   style: TextStyle(color: Colors.white),
                 ),
               ),

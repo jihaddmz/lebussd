@@ -5,6 +5,7 @@ import 'package:dart_ping/dart_ping.dart';
 import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/helepr_purchases.dart';
+import 'package:lebussd/helpers.dart';
 import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
@@ -41,8 +42,8 @@ class MyApp extends StatefulWidget {
 class _MyApp extends State<MyApp> {
   _MyApp() {
     if (Platform.isAndroid) PathProviderAndroid.registerWith();
-    checkNetwork();
     createDatabase();
+    checkNetwork();
   }
 
   Future<void> createDatabase() async {

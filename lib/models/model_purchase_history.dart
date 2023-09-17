@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 class ModelPurchaseHistory {
   final int id;
   final double bundle;
@@ -7,7 +5,7 @@ class ModelPurchaseHistory {
   final String phoneNumber;
   final String date;
   final String color;
-  final bool isTouch;
+  final int isTouch;
 
   const ModelPurchaseHistory(
       {required this.id,

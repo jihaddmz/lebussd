@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:image_picker/image_picker.dart';
@@ -203,7 +202,7 @@ class _ScreenContactUs extends State<ScreenContactUs> {
     final Email email = Email(
       body: _controllerMessage.text.trim(),
       subject: _selectedOption,
-      recipients: ['developer@appsfourlife.com'],
+      recipients: ['support@appsfourlife.com'],
       attachmentPaths: fromToString(),
       isHTML: false,
     );

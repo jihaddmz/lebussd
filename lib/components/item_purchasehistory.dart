@@ -5,7 +5,7 @@ import 'package:lebussd/models/model_bundle.dart';
 import '../models/model_purchase_history.dart';
 
 Widget itemPurchaseHistory(ModelPurchaseHistory modelPurchaseHistory) {
-  return SizedBox(height: 130, child: Row(
+  return SizedBox(height: 145, child: Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.max,
     children: [

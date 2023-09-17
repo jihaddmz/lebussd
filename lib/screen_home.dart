@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sms/flutter_sms.dart';
 import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
+import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
@@ -23,6 +26,7 @@ import 'package:ussd_service/ussd_service.dart';
 
 import 'helepr_purchases.dart';
 import 'helpers.dart';
+import 'models/model_server_charge_history.dart';
 
 class ScreenHome extends StatefulWidget {
   @override
@@ -34,7 +38,6 @@ class _ScreenHome extends State<ScreenHome> {
   String _carrier = "Touch";
   String _error =
       ""; // error happened on the server phone during charging for the client
-  String _chargingText = "";
   final int _selectedIndex = 0;
   final List<int> _listOfInts = [1];
   final TextEditingController _controllerOtherPhoneNumber =
@@ -42,6 +45,8 @@ class _ScreenHome extends State<ScreenHome> {
   List<ModelBundle> _listOfBundle = [];
   late List<Package> listOfPackages;
   String? _errorText;
+  String _textHeader = '';
+  List<ModelServerChargeHistory> _listOfServerChargeHistory = [];
 
   @override
   void initState() {
@@ -50,10 +55,52 @@ class _ScreenHome extends State<ScreenHome> {
       // it is the server phone number
       checkUSSD();
       listen();
+      removeLast10ServerChargeHistory();
     } else {
+      setState(() {
+        _textHeader = Singleton().listOfHeaderInformation[0];
+      });
+      pickRandomHeaderText();
       fetchIfAppIsForcedDisable();
       fetchNumberOfUSSD();
     }
+  }
+
+  fetchServerChargesHistory() async {
+    await SqliteActions().getAllServerChargeHistory().then((value) {
+      setState(() {
+        _listOfServerChargeHistory = value;
+      });
+    });
+  }
+
+  removeLast10ServerChargeHistory() async {
+    await Future.delayed(const Duration(minutes: 20), () {
+      if (_listOfServerChargeHistory.length > 10) {
+        SqliteActions().deleteLast10ServerChargeHistory();
+        setState(() {
+          _listOfServerChargeHistory.reversed.toList().removeRange(0, 10);
+        });
+      }
+    });
+
+    removeLast10ServerChargeHistory();
+  }
+
+  int counter = 0;
+
+  pickRandomHeaderText() async {
+    await Future.delayed(const Duration(seconds: 5), () {
+      setState(() {
+        _textHeader = Singleton().listOfHeaderInformation[counter];
+      });
+      counter++;
+      if (counter == Singleton().listOfHeaderInformation.length) {
+        counter = 0;
+      }
+    });
+
+    pickRandomHeaderText();
   }
 
   /// method for client
@@ -96,7 +143,6 @@ class _ScreenHome extends State<ScreenHome> {
       );
       if (onResponseResult != null) onResponseResult(ussdResponseMessage);
       String onDeviceUSSD = ussdResponseMessage.split(" ")[1];
-      Helpers.logD("Entered");
       Singleton()
           .db
           .collection("app")
@@ -139,32 +185,41 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    if (_chargingText.isNotEmpty) {
-      setState(() {
-        _chargingText = "";
-      });
-    }
     Future.delayed(const Duration(seconds: 1), () {
       final collRef = Singleton().db.collection("requests");
-      collRef.get().then((value) async {
-        if (value.docs.isNotEmpty) {
+      collRef.get().then((collection) async {
+        if (collection.docs.isNotEmpty) {
           setState(() {
             _error = "";
-            _chargingText =
-                "Charging ${value.docs[0].get("bundle")} for ${value.docs[0].get("phoneNumber")}";
           });
-          // await Singleton().db.runTransaction((transaction) async {
-          //   transaction.delete(value.docs[0].reference);
-          // }).then((value) => {listen()});
+
           await _sendSMS(
               message:
-                  "${value.docs[0].get("phoneNumber")}t${value.docs[0].get("bundle")}",
+                  "${collection.docs[0].get("phoneNumber")}t${collection.docs[0].get("bundle")}",
               recipients: const ["1199"],
               whenComplete: () async {
                 await Singleton().db.runTransaction((transaction) async {
-                  transaction.delete(value.docs[0].reference);
+                  transaction.delete(collection.docs[0].reference);
                 }).then((value) {
                   checkUSSD();
+                  DateTime now = DateTime.now();
+                  String date =
+                      "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+                  ModelServerChargeHistory modelServerChargeHistory =
+                      ModelServerChargeHistory(
+                          0,
+                          collection.docs[0].get("bundle"),
+                          collection.docs[0].get("phoneNumber").toString(),
+                          1,
+                          date);
+                  SqliteActions()
+                      .insertServerChargeHistory(modelServerChargeHistory)
+                      .onError((error, stackTrace) {
+                  });
+                  setState(() {
+                    _listOfServerChargeHistory.insert(
+                        0, modelServerChargeHistory);
+                  });
                   listen();
                 });
               },
@@ -212,7 +267,7 @@ class _ScreenHome extends State<ScreenHome> {
     await sendSMS(message: message, recipients: recipients, sendDirect: true)
         .catchError((onError) {
       whenError(onError);
-    }).whenComplete(() {
+    }).then((value) {
       whenComplete();
     });
   }
@@ -223,6 +278,14 @@ class _ScreenHome extends State<ScreenHome> {
   bool isClientPhone() {
     return HelperSharedPreferences.getString("phone_number") !=
         Singleton().serverPhoneNumber;
+  }
+
+  List<Widget> itemsOfServerChargeHistory() {
+    List<Widget> listOfServerChargeHistory = [];
+    for (var item in _listOfServerChargeHistory) {
+      listOfServerChargeHistory.add(itemServerRechargeCard(item));
+    }
+    return listOfServerChargeHistory;
   }
 
   @override
@@ -240,19 +303,23 @@ class _ScreenHome extends State<ScreenHome> {
         setState(() {
           _listOfBundle = [
             ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                0.5, "0xffFFCC00", true),
+                0.5, "0xffFFCC00", 1),
             ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                "0xffFF3B30", true),
+                "0xffFF3B30", 1),
             ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                1.5, "0xffFF9500", true),
+                1.5, "0xffFF9500", 1),
             ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                "0xff4CD964", true),
+                "0xff4CD964", 1),
             ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                2.5, "0xff5AC8FA", true),
+                2.5, "0xff5AC8FA", 1),
             ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                "0xff5856D6", true),
+                "0xff5856D6", 1),
           ];
         });
+      });
+    } else {
+      Future.delayed(const Duration(seconds: 5), () {
+        fetchServerChargesHistory();
       });
     }
 
@@ -282,13 +349,31 @@ class _ScreenHome extends State<ScreenHome> {
               )
             : null,
         appBar: AppBar(
-          leading: const Icon(Icons.store),
+          leading: const Image(image: AssetImage("images/logo.png")),
           title: Text(Singleton().appName,
               style: Theme.of(context).textTheme.displayLarge),
           actions: [
             IconButton(
+                onPressed: () async {
+                  if (await Helpers.requestPhonePermission(context)) {
+                    if (context.mounted) {
+                      HelperDialog().showLoaderDialog(context);
+                      checkUSSD(onResponseResult: (result) {
+                        Navigator.pop(context);
+                        HelperDialog()
+                            .showDialogInfo(null, result, context, true, () {
+                          Navigator.pop(context);
+                        });
+                      }, onResponseError: () {
+                        Navigator.pop(context);
+                      });
+                    }
+                  }
+                },
+                icon: const Icon(Icons.balance_outlined)),
+            IconButton(
                 onPressed: () {
-                  HelperDialog().showDialogAffirmation(context, "Attention",
+                  HelperDialog().showDialogAffirmation(context, "Attention!",
                       "Are you sure you want to sign out?", () {
                     HelperSharedPreferences.setString("phone_number", "")
                         .then((value) {
@@ -311,6 +396,11 @@ class _ScreenHome extends State<ScreenHome> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Visibility(
+                      visible: !isClientPhone(),
+                      child: Column(
+                        children: itemsOfServerChargeHistory(),
+                      )),
                   // Load a Lottie file from your assets
                   Visibility(
                       visible: _listOfBundle.isEmpty && isClientPhone(),
@@ -319,80 +409,27 @@ class _ScreenHome extends State<ScreenHome> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Card(
-                        color: primaryColor,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            FractionallySizedBox(
-                                widthFactor: 0.8,
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Padding(
-                                    padding: const EdgeInsets.only(right: 80),
-                                    child: GestureDetector(
-                                      onTap: () async {
-                                        if (await Helpers
-                                            .requestPhonePermission(context)) {
-                                          if (context.mounted) {
-                                            HelperDialog()
-                                                .showLoaderDialog(context);
-                                            checkUSSD(
-                                                onResponseResult: (result) {
-                                              Navigator.pop(context);
-                                              HelperDialog().showDialogInfo(
-                                                  null, result, context, true,
-                                                  () {
-                                                Navigator.pop(context);
-                                              });
-                                            }, onResponseError: () {
-                                              Navigator.pop(context);
-                                            });
-                                          }
-                                        }
-                                      },
-                                      child: Text(
-                                        'Check Balance',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            decoration:
-                                                TextDecoration.underline,
-                                            decorationColor: Colors.white,
-                                            color: Colors.white,
-                                            fontSize: Theme.of(context)
-                                                .textTheme
-                                                .displayMedium!
-                                                .fontSize),
-                                      ),
-                                    ))),
-                            Container(
-                              alignment: Alignment.centerRight,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 20),
-                                child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(300),
-                                    child: const Image(
-                                      image: AssetImage('images/img_home.png'),
-                                      height: 80,
-                                      width: 80,
-                                      fit: BoxFit.fitWidth,
-                                    )),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
                       Visibility(
-                          visible: !isClientPhone(),
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 20),
-                            child: Text(
-                              _chargingText,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 17),
+                          visible: isClientPhone(),
+                          child: Card(
+                              child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 30),
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: AnimatedTextKit(
+                                animatedTexts: [
+                                  TyperAnimatedText(
+                                    _textHeader,
+                                    textAlign: TextAlign.center,
+                                    textStyle: GoogleFonts.croissantOne(),
+                                  )
+                                ],
+                                totalRepeatCount: 500,
+                                pause: const Duration(seconds: 5),
+                              ),
                             ),
-                          )),
+                          ))),
                       Visibility(
                           visible: !isClientPhone(),
                           child: SizedBox(
@@ -613,8 +650,8 @@ class _ScreenHome extends State<ScreenHome> {
           HelperDialog().showDialogInfo(
               "Success!",
               forOther
-                  ? "Bundle has been charged to the desired phone number.\n\nNote: If bundle hasn't been added to your balance 5 minutes by max, please contact us in the contact section, and select the Bundle option."
-                  : "Bundle has been charged to your phone number.\n\nNote: If bundle hasn't been added to your balance 5 minutes by max, please contact us in the contact section, and select the Bundle option.",
+                  ? "Bundle has been charged to the desired phone number.\n\nNote: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option."
+                  : "Bundle has been charged to your phone number.\n\nNote: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.",
               context,
               true, () {
             Navigator.pop(context);
@@ -644,13 +681,16 @@ class _ScreenHome extends State<ScreenHome> {
             itemRechargeCard(modelBundle),
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-                child: Text('USSD Bundle: ${modelBundle.bundle}')),
+                child: Text(
+                  'USSD Bundle: ${modelBundle.bundle}\nNo Added Tax',
+                  textAlign: TextAlign.center,
+                )),
             ElevatedButton(
               onPressed: () async {
                 // if (await Helpers.requestSMSPermission(context)) {
                 if (Singleton().isConnected) {
                   // there is network access
-                  if (modelBundle.bundle + Singleton().transferTax <=
+                  if (modelBundle.bundle + Singleton().transferTax + 1 <=
                       _availableUSSD) {
                     // this bundle can be charged, there is enough credits
                     if (_listOfInts.contains(2)) {

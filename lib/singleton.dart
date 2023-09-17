@@ -32,6 +32,13 @@ class Singleton {
   List<BottomNavigationBarItem> listOfBottomNavItemsSever = [
     const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
   ];
+  List<String> listOfHeaderInformation = [
+    "Stay connected anywhere anytime. Never run out of credits again!",
+    "Fast charging process. One tap and boooooomm, your charged up!",
+    'Secure payment process. Payments are secured by Google!',
+    "Charge for yourself and your beloved ones in the same app!",
+    "You can pay with credit, debit, or even prepaid cards!"
+  ];
   late String phoneNumber;
   bool isConnected = true;
   late Database databaseSqlite;

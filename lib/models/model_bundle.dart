@@ -4,7 +4,7 @@ class ModelBundle {
   double price;
   double bundle;
   String color;
-  bool isTouch;
+  int isTouch; // 1 true 0 false
 
   ModelBundle(this.price, this.bundle, this.color, this.isTouch);
 }
