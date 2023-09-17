@@ -444,10 +444,10 @@ class _ScreenHome extends State<ScreenHome> {
                           visible: isClientPhone(),
                           child: Column(
                             children: [
-                              // const Text(
-                              //   "Alpha phones are not currently supported, but they will be soon. Stay tuned!",
-                              //   style: TextStyle(color: Colors.grey),
-                              // ),
+                              const Text(
+                                "Alpha phones are not currently supported, but they will be soon. Stay tuned!",
+                                style: TextStyle(color: Colors.grey),
+                              ),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
