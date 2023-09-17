@@ -2,18 +2,23 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dart_ping/dart_ping.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lebussd/HelperSharedPref.dart';
+import 'package:lebussd/helepr_purchases.dart';
+import 'package:lebussd/helpers.dart';
 import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
+import 'package:lebussd/sqlite_actions.dart';
+import 'package:path/path.dart';
 import 'package:path_provider_android/path_provider_android.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 bool isUserSignedIn() {
-  return Singleton().firebaseAuth.currentUser != null;
+  return HelperSharedPreferences.getString("phone_number").isNotEmpty;
 }
 
 Future<void> main() async {
@@ -21,8 +26,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  Singleton().firebaseAuth = FirebaseAuth.instance;
+  Singleton().sharedPreferences = await SharedPreferences.getInstance();
   Singleton().db = FirebaseFirestore.instance;
+  HelpersPurchases().initPlatformState();
   runApp(MyApp());
 }
 
@@ -36,7 +42,22 @@ class MyApp extends StatefulWidget {
 class _MyApp extends State<MyApp> {
   _MyApp() {
     if (Platform.isAndroid) PathProviderAndroid.registerWith();
+    createDatabase();
     checkNetwork();
+  }
+
+  Future<void> createDatabase() async {
+    await openDatabase(
+            // Set the path to the database. Note: Using the `join` function from the
+            // `path` package is best practice to ensure the path is correctly
+            // constructed for each platform.
+            join(await getDatabasesPath(), 'db_app.db'),
+            onCreate: (db, version) async {
+      await SqliteActions().createPurchaseHistoryTable(db);
+    }, version: 1)
+        .then((value) {
+      Singleton().databaseSqlite = value;
+    });
   }
 
   void checkNetwork() async {
@@ -67,31 +88,31 @@ class _MyApp extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LebUSSD',
-      theme: ThemeData(
-        colorScheme: const ColorScheme(
-            brightness: Brightness.dark,
-            primary: Color.fromARGB(255, 37, 132, 241),
-            onPrimary: Colors.white,
-            secondary: Colors.grey,
-            onSecondary: Color.fromARGB(100, 37, 132, 241),
-            error: Color.fromARGB(160, 167, 7, 7),
-            onError: Colors.white,
-            background: Color.fromARGB(255, 255, 255, 255),
-            onBackground: Colors.black,
-            surface: Color.fromARGB(255, 255, 255, 255),
-            onSurface: Colors.black),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-          displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
-          displaySmall: TextStyle(fontSize: 14),
-          labelLarge: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-          labelMedium: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: 'LebUSSD',
+        theme: ThemeData(
+          colorScheme: const ColorScheme(
+              brightness: Brightness.dark,
+              primary: Color.fromARGB(255, 37, 132, 241),
+              onPrimary: Colors.white,
+              secondary: Colors.grey,
+              onSecondary: Color.fromARGB(100, 37, 132, 241),
+              error: Color.fromARGB(160, 167, 7, 7),
+              onError: Colors.white,
+              background: Color.fromARGB(255, 255, 255, 255),
+              onBackground: Colors.black,
+              surface: Color.fromARGB(255, 255, 255, 255),
+              onSurface: Colors.black),
+          textTheme: const TextTheme(
+            displayLarge: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+            displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
+            displaySmall: TextStyle(fontSize: 14),
+            labelLarge: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+            labelMedium: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          // fontFamily: 'Poppins',
+          fontFamily: 'Brandmark1 Bold',
+          useMaterial3: true,
         ),
-        fontFamily: 'Poppins',
-        useMaterial3: true,
-      ),
-      home: isUserSignedIn() ? ScreenHome() : ScreenWelcome(),
-    );
+        home: isUserSignedIn() ? ScreenHome() : ScreenWelcome());
   }
 }

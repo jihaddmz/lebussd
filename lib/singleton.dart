@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'models/model_bundle.dart';
 
@@ -15,21 +16,30 @@ class Singleton {
     // initialization logic
   }
 
-  late FirebaseAuth firebaseAuth;
+  final String serverPhoneNumber = "70936314"; // 70936314
+  final double transferTax = 0.16;
+  final String appName = "AlloDolar";
+
   late FirebaseFirestore db;
-  String serverPhoneNubmer = "+96181909560";
-  List<ModelBundle> listOfBundle = [
-    ModelBundle('images/img_0.5.png', 0.6, 0.5),
-    ModelBundle('images/img_1.png', 1.2, 1),
-    ModelBundle('images/img_1.5.png', 1.8, 1.5),
-    ModelBundle('images/img_2.png', 2.4, 2),
-    ModelBundle('images/img_2.5.png', 3, 2.5),
-    ModelBundle('images/img_3.png', 3.6, 3)
-  ];
+  late SharedPreferences sharedPreferences;
+  List<ModelBundle> listOfBundle = [];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
+    const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+    const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+    const BottomNavigationBarItem(
+        icon: Icon(Icons.contact_support_outlined), label: 'Contact Us'),
+  ];
+  List<BottomNavigationBarItem> listOfBottomNavItemsSever = [
     const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-    const BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Cart'),
+  ];
+  List<String> listOfHeaderInformation = [
+    "Stay connected anywhere anytime. Never run out of credits again!",
+    "Fast charging process. One tap and boooooomm, your charged up!",
+    'Secure payment process. Payments are secured by Google!',
+    "Charge for yourself and your beloved ones in the same app!",
+    "You can pay with credit, debit, or even prepaid cards!"
   ];
   late String phoneNumber;
   bool isConnected = true;
+  late Database databaseSqlite;
 }

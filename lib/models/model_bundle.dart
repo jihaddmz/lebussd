@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 class ModelBundle {
-  String imagePath;
   double price;
   double bundle;
+  String color;
+  int isTouch; // 1 true 0 false
 
-  ModelBundle(this.imagePath, this.price, this.bundle);
+  ModelBundle(this.price, this.bundle, this.color, this.isTouch);
 }
