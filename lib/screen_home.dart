@@ -56,6 +56,7 @@ class _ScreenHome extends State<ScreenHome> {
       checkUSSD();
       listen();
       removeLast10ServerChargeHistory();
+      waitToCheckBalance();
     } else {
       setState(() {
         _textHeader = Singleton().listOfHeaderInformation[0];
@@ -64,6 +65,23 @@ class _ScreenHome extends State<ScreenHome> {
       fetchIfAppIsForcedDisable();
       fetchNumberOfUSSD();
     }
+  }
+
+  waitToCheckBalance() async {
+    await Future.delayed(const Duration(seconds: 5), () {
+      Singleton()
+          .db
+          .collection("app")
+          .doc("ussd_options")
+          .get()
+          .then((value) async {
+        if (value.get("checkBalance")) {
+          checkUSSD(onResponseResult: (value) {}, onResponseError: () {});
+        }
+      }).onError((error, stackTrace) {});
+    });
+
+    waitToCheckBalance();
   }
 
   fetchServerChargesHistory() async {
@@ -142,16 +160,17 @@ class _ScreenHome extends State<ScreenHome> {
             seconds: 60), // timeout (optional) - default is 10 seconds
       );
       if (onResponseResult != null) onResponseResult(ussdResponseMessage);
-      String onDeviceUSSD = ussdResponseMessage.split(" ")[1];
-      Singleton()
-          .db
-          .collection("app")
-          .doc("ussd_options")
-          .set({'available_ussd': onDeviceUSSD}, SetOptions(merge: true));
-
-      setState(() {
-        _availableUSSD = double.parse(onDeviceUSSD);
-      });
+      if (!isClientPhone()) {
+        String onDeviceUSSD = ussdResponseMessage.split(" ")[1];
+        Singleton()
+            .db
+            .collection("app")
+            .doc("ussd_options")
+            .set({'available_ussd': onDeviceUSSD}, SetOptions(merge: true));
+        setState(() {
+          _availableUSSD = double.parse(onDeviceUSSD);
+        });
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();
