@@ -251,7 +251,7 @@ class _ScreenHome extends State<ScreenHome> {
                           0,
                           double.parse(collection.docs[0].get("bundle")),
                           collection.docs[0].get("phoneNumber").toString(),
-                          1,
+                          _carrier == "Touch" ? 1 : 0,
                           collection.docs[0].get("date").toString());
                   await SqliteActions()
                       .insertServerChargeHistory(modelServerChargeHistory)
