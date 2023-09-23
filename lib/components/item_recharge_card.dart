@@ -30,10 +30,10 @@ Widget itemRechargeCard(ModelBundle modelBundle) {
                   style: TextStyle(color: Colors.white),
                 ),
               ),
-              const Align(
+              Align(
                 alignment: Alignment.bottomRight,
                 child: Image(
-                    image: AssetImage('images/touch.png'),
+                    image: modelBundle.isTouch == 1 ? const AssetImage('images/touch.png') : const AssetImage('images/alfa.png'),
                     width: 50,
                     height: 50),
               )

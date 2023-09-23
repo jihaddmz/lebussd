@@ -23,6 +23,7 @@ class Singleton {
   late FirebaseFirestore db;
   late SharedPreferences sharedPreferences;
   List<ModelBundle> listOfBundle = [];
+  final List<String> listOfCarriers = const ["Touch", "Alfa"];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
     const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
     const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),

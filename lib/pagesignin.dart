@@ -15,7 +15,6 @@ class _SigninPage extends State<SigninPage> {
   final TextEditingController _controllerPhoneNumber = TextEditingController();
   String? _errorText;
   String _carrierValue = "Touch";
-  List<String> list = const ["Touch", "Alpha"];
 
   _SigninPage();
 
@@ -113,11 +112,11 @@ class _SigninPage extends State<SigninPage> {
                 child: DropdownButton(
                     value: _carrierValue,
                     icon: const Icon(
-                      Icons.arrow_downward,
+                      Icons.arrow_drop_down,
                       color: primaryColor,
                     ),
                     isExpanded: true,
-                    items: list.map((e) {
+                    items: Singleton().listOfCarriers.map((e) {
                       return DropdownMenuItem(value: e, child: Text(e));
                     }).toList(),
                     onChanged: (value) {
