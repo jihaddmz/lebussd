@@ -12,6 +12,7 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/main.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
 import 'package:lebussd/screen_contactus.dart';
@@ -29,6 +30,10 @@ import 'helpers.dart';
 import 'models/model_server_charge_history.dart';
 
 class ScreenHome extends StatefulWidget {
+  const ScreenHome({required this.callbackForWaitToRestart});
+
+  final Function callbackForWaitToRestart;
+
   @override
   _ScreenHome createState() => _ScreenHome();
 }
@@ -62,6 +67,7 @@ class _ScreenHome extends State<ScreenHome> {
       listen();
       removeLast10ServerChargeHistory();
       waitToCheckBalance();
+      widget.callbackForWaitToRestart();
     } else {
       setState(() {
         _textHeader = Singleton().listOfHeaderInformation[0];
@@ -384,9 +390,7 @@ class _ScreenHome extends State<ScreenHome> {
                     if (_selectedIndex != index) {
                       Navigator.of(context).push(
                           MaterialPageRoute(builder: (BuildContext context) {
-                        if (index == 0) {
-                          return ScreenHome();
-                        } else if (index == 1) {
+                        if (index == 1) {
                           return ScreenPurchaseHistory();
                         } else {
                           return ScreenContactUs();
@@ -733,7 +737,9 @@ class _ScreenHome extends State<ScreenHome> {
               context,
               true, () {
             Navigator.pop(context);
-          }, note: "Note: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.");
+          },
+              note:
+                  "Note: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.");
         }
       });
     }).onError((error, stackTrace) {
