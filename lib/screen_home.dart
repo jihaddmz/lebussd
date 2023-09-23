@@ -324,24 +324,38 @@ class _ScreenHome extends State<ScreenHome> {
   }
 
   fetchBundlesFromRevenueCat() async {
-    HelpersPurchases().setProducts(onOfferingsGetComplete: (offering) {
+    bool isTouch;
+    if (_isChargingForOther) {
+      if (_otherCarrier == "Touch") {
+        isTouch = true;
+      } else {
+        isTouch = false;
+      }
+    } else {
+      if (_carrier == "Touch") {
+        isTouch = true;
+      } else {
+        isTouch = false;
+      }
+    }
+    HelpersPurchases().setProducts(isTouch: isTouch, onOfferingsGetComplete: (offering) {
       listOfPackages = offering.availablePackages;
       setState(() {
         if (_isChargingForOther) { // charging for other
           if (_otherCarrier == "Touch") {
             _listOfBundle = [
               ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                  0.5, "0xffFFCC00", 1),
+                  0.5, "0xffFFCC00", isTouch ? 1 : 0),
               ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                  "0xffFF3B30", 1),
+                  "0xffFF3B30", isTouch ? 1 : 0),
               ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                  1.5, "0xffFF9500", 1),
+                  1.5, "0xffFF9500", isTouch ? 1 : 0),
               ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                  "0xff4CD964", 1),
+                  "0xff4CD964", isTouch ? 1 : 0),
               ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                  2.5, "0xff5AC8FA", 1),
+                  2.5, "0xff5AC8FA", isTouch ? 1 : 0),
               ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                  "0xff5856D6", 1),
+                  "0xff5856D6", isTouch ? 1 : 0),
             ];
           } else {
             // todo fetch alfa bundles
@@ -755,6 +769,19 @@ class _ScreenHome extends State<ScreenHome> {
   }
 
   Widget item(ModelBundle modelBundle) {
+    if (_isChargingForOther) {
+      if (_otherCarrier == "Touch") {
+        Singleton().transferTax = 0.16;
+      } else {
+        Singleton().transferTax = 0.14;
+      }
+    } else {
+      if (_carrier == "Touch") {
+        Singleton().transferTax = 0.16;
+      } else {
+        Singleton().transferTax = 0.14;
+      }
+    }
     return Container(
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20), color: secondaryColor),
@@ -838,7 +865,6 @@ class _ScreenHome extends State<ScreenHome> {
                     });
                   }
                 }
-                // }
               },
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
