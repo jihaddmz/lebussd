@@ -222,7 +222,9 @@ class _ScreenHome extends State<ScreenHome> {
   ///
   void listen() async {
     Future.delayed(const Duration(seconds: 1), () async {
-      final collRef = Singleton().db.collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
+      final collRef = Singleton()
+          .db
+          .collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
       await collRef.get().then((collection) async {
         if (collection.docs.isNotEmpty) {
           setState(() {
@@ -323,6 +325,9 @@ class _ScreenHome extends State<ScreenHome> {
     return listOfServerChargeHistory;
   }
 
+  ///
+  /// method to fetch touch or alfa bundles
+  ///
   fetchBundlesFromRevenueCat() async {
     bool isTouch;
     if (_isChargingForOther) {
@@ -338,11 +343,11 @@ class _ScreenHome extends State<ScreenHome> {
         isTouch = false;
       }
     }
-    HelpersPurchases().setProducts(isTouch: isTouch, onOfferingsGetComplete: (offering) {
-      listOfPackages = offering.availablePackages;
-      setState(() {
-        if (_isChargingForOther) { // charging for other
-          if (_otherCarrier == "Touch") {
+    HelpersPurchases().setProducts(
+        isTouch: isTouch,
+        onOfferingsGetComplete: (offering) {
+          listOfPackages = offering.availablePackages;
+          setState(() {
             _listOfBundle = [
               ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
                   0.5, "0xffFFCC00", isTouch ? 1 : 0),
@@ -357,37 +362,12 @@ class _ScreenHome extends State<ScreenHome> {
               ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
                   "0xff5856D6", isTouch ? 1 : 0),
             ];
-          } else {
-            // todo fetch alfa bundles
-          }
-        } else { // charging for himself
-          if (_carrier == "Touch") {
-            _listOfBundle = [
-              ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                  0.5, "0xffFFCC00", 1),
-              ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                  "0xffFF3B30", 1),
-              ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                  1.5, "0xffFF9500", 1),
-              ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                  "0xff4CD964", 1),
-              ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                  2.5, "0xff5AC8FA", 1),
-              ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                  "0xff5856D6", 1),
-            ];
-          } else {
-            // todo fetch alfa bundles
-          }
-        }
-      });
-    });
-
+          });
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-
     if (isClientPhone()) {
       fetchBundlesFromRevenueCat();
     } else {
@@ -748,12 +728,12 @@ class _ScreenHome extends State<ScreenHome> {
           HelperDialog().showDialogInfo(
               "Success!",
               forOther
-                  ? "Bundle has been charged to the desired phone number.\n\nNote: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option."
-                  : "Bundle has been charged to your phone number.\n\nNote: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.",
+                  ? "Bundle has been charged to the desired phone number."
+                  : "Bundle has been charged to your phone number.",
               context,
               true, () {
             Navigator.pop(context);
-          });
+          }, note: "Note: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.");
         }
       });
     }).onError((error, stackTrace) {
@@ -824,7 +804,8 @@ class _ScreenHome extends State<ScreenHome> {
                         for (var package in listOfPackages) {
                           if (package.identifier ==
                               "ussd_${modelBundle.bundle.toString().replaceFirst(".0", "")}") {
-                            modelBundle.isTouch = _otherCarrier == "Touch" ? 1 : 0;
+                            modelBundle.isTouch =
+                                _otherCarrier == "Touch" ? 1 : 0;
                             purchaseAndCharge(modelBundle, package, true);
                             return;
                           }
