@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 class ModelBundle {
   double price;
   double bundle;

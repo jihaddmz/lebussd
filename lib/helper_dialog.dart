@@ -3,14 +3,29 @@ import 'package:lottie/lottie.dart';
 
 class HelperDialog {
   void showDialogInfo(String? title, String content, BuildContext context,
-      bool showOKBtn, Function onPressed) {
+      bool showOKBtn, Function onPressed,
+      {String note = ""}) {
     showDialog(
         barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: title != null ? Text(title) : null,
-            content: Text(content),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(content),
+                Visibility(
+                    visible: note != "",
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(
+                        note,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ))
+              ],
+            ),
             actions: [
               SizedBox(
                 width: MediaQuery.of(context).size.width - 50,

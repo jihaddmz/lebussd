@@ -30,10 +30,10 @@ Widget itemServerRechargeCard(
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          const Align(
+          Align(
             alignment: Alignment.bottomRight,
             child: Image(
-                image: AssetImage('images/touch.png'), width: 50, height: 50),
+                image: modelServerChargeHistory.isTouch == 1 ? const AssetImage('images/touch.png') : const AssetImage('images/alfa.png'), width: 50, height: 50),
           )
         ],
       ),

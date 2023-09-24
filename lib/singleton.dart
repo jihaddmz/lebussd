@@ -17,12 +17,14 @@ class Singleton {
   }
 
   final String serverPhoneNumber = "70936314"; // 70936314
-  final double transferTax = 0.16;
+  final List<String> listOfServerPhoneNumbers = ["70936314", "81803008"];
+  double transferTax = 0.16;
   final String appName = "AlloDolar";
 
   late FirebaseFirestore db;
   late SharedPreferences sharedPreferences;
   List<ModelBundle> listOfBundle = [];
+  final List<String> listOfCarriers = const ["Touch", "Alfa"];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
     const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
     const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),

@@ -15,7 +15,6 @@ class _SigninPage extends State<SigninPage> {
   final TextEditingController _controllerPhoneNumber = TextEditingController();
   String? _errorText;
   String _carrierValue = "Touch";
-  List<String> list = const ["Touch", "Alpha"];
 
   _SigninPage();
 
@@ -29,28 +28,30 @@ class _SigninPage extends State<SigninPage> {
               padding: const EdgeInsets.only(bottom: 20),
               child: ElevatedButton(
                 onPressed: () async {
-                  if (_controllerPhoneNumber.text.trim().isEmpty) {
+                  String phoneNumber = _controllerPhoneNumber.text.trim();
+                  if (phoneNumber.isEmpty) {
                     setState(() {
                       _errorText = "Please enter your phone number.";
                     });
                     return;
                   }
 
-                  if (_controllerPhoneNumber.text.trim().length != 8) {
+                  if (phoneNumber.length != 8) {
                     setState(() {
                       _errorText = "Invalid phone number.";
                     });
                     return;
                   }
 
-                  HelperSharedPreferences.setString(
-                          "phone_number", _controllerPhoneNumber.text.trim())
+                  HelperSharedPreferences.setString("phone_number", phoneNumber)
                       .then((value) {
                     HelperSharedPreferences.setString("carrier", _carrierValue)
                         .then((value) {
                       Navigator.of(context).push(
                           MaterialPageRoute(builder: (BuildContext context) {
-                        return ScreenHome();
+                        return ScreenHome(
+                          callbackForWaitToRestart: () {},
+                        );
                       }));
                     });
                   });
@@ -66,8 +67,7 @@ class _SigninPage extends State<SigninPage> {
                   minimumSize: MaterialStateProperty.all<Size>(
                       Size(MediaQuery.of(context).size.width - 50, 50)),
                 ),
-                child:
-                    const Text('Sign Up', style: const TextStyle(fontSize: 18)),
+                child: const Text('Sign Up', style: TextStyle(fontSize: 18)),
               )),
         ),
         body: SingleChildScrollView(
@@ -113,11 +113,11 @@ class _SigninPage extends State<SigninPage> {
                 child: DropdownButton(
                     value: _carrierValue,
                     icon: const Icon(
-                      Icons.arrow_downward,
+                      Icons.arrow_drop_down,
                       color: primaryColor,
                     ),
                     isExpanded: true,
-                    items: list.map((e) {
+                    items: Singleton().listOfCarriers.map((e) {
                       return DropdownMenuItem(value: e, child: Text(e));
                     }).toList(),
                     onChanged: (value) {
