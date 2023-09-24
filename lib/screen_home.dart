@@ -63,6 +63,7 @@ class _ScreenHome extends State<ScreenHome> {
 
     if (!isClientPhone()) {
       // it is the server phone number
+      requestServerPhonePermissions();
       checkUSSD();
       listen();
       removeLast10ServerChargeHistory();
@@ -76,6 +77,16 @@ class _ScreenHome extends State<ScreenHome> {
       fetchIfAppIsForcedDisable();
       fetchNumberOfUSSD();
     }
+  }
+
+  requestServerPhonePermissions() async {
+    Future.delayed(const Duration(seconds: 2), () {
+      Helpers.requestPhonePermission(context).then((value) {
+        if (value) {
+          Helpers.requestSMSPermission(context);
+        }
+      });
+    });
   }
 
   waitToCheckBalance() async {
@@ -319,8 +330,13 @@ class _ScreenHome extends State<ScreenHome> {
   /// method to check if this device is a client or the server phone
   ///
   bool isClientPhone() {
-    return HelperSharedPreferences.getString("phone_number") !=
-        Singleton().serverPhoneNumber;
+    for (var number in Singleton().listOfServerPhoneNumbers) {
+      if (HelperSharedPreferences.getString("phone_number") == number) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   List<Widget> itemsOfServerChargeHistory() {

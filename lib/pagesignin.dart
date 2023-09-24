@@ -36,16 +36,6 @@ class _SigninPage extends State<SigninPage> {
                     return;
                   }
 
-                  for (var serverPhoneNumber
-                      in Singleton().listOfServerPhoneNumbers) {
-                    if (serverPhoneNumber == phoneNumber) {
-                      setState(() {
-                        _errorText = "Invalid phone number.";
-                      });
-                      return;
-                    }
-                  }
-
                   if (phoneNumber.length != 8) {
                     setState(() {
                       _errorText = "Invalid phone number.";
