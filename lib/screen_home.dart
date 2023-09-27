@@ -39,7 +39,6 @@ class ScreenHome extends StatefulWidget {
 }
 
 class _ScreenHome extends State<ScreenHome> {
-  double _availableUSSD = 0.0;
   String _carrier = "Touch";
   String _error =
       ""; // error happened on the server phone during charging for the client
@@ -64,7 +63,7 @@ class _ScreenHome extends State<ScreenHome> {
     if (!isClientPhone()) {
       // it is the server phone number
       requestServerPhonePermissions();
-      checkUSSD();
+      // checkUSSD();
       listen();
       removeLast10ServerChargeHistory();
       waitToCheckBalance();
@@ -75,7 +74,6 @@ class _ScreenHome extends State<ScreenHome> {
       });
       pickRandomHeaderText();
       fetchIfAppIsForcedDisable();
-      fetchNumberOfUSSD();
     }
   }
 
@@ -90,7 +88,7 @@ class _ScreenHome extends State<ScreenHome> {
   }
 
   waitToCheckBalance() async {
-    await Future.delayed(const Duration(seconds: 5), () {
+    await Future.delayed(const Duration(seconds: 2), () {
       Singleton()
           .db
           .collection("app")
@@ -187,8 +185,8 @@ class _ScreenHome extends State<ScreenHome> {
             seconds: 60), // timeout (optional) - default is 10 seconds
       );
       if (onResponseResult != null) onResponseResult(ussdResponseMessage);
+      String onDeviceUSSD;
       if (!isClientPhone()) {
-        String onDeviceUSSD;
         if (_carrier == "Alfa") {
           onDeviceUSSD = ussdResponseMessage
               .split(" ")[0]
@@ -201,9 +199,6 @@ class _ScreenHome extends State<ScreenHome> {
         Singleton().db.collection("app").doc("ussd_options").set(
             {firebaseAvailableUSSDField: onDeviceUSSD},
             SetOptions(merge: true));
-        setState(() {
-          _availableUSSD = double.parse(onDeviceUSSD);
-        });
       }
     } catch (e) {
       setState(() {
@@ -216,20 +211,18 @@ class _ScreenHome extends State<ScreenHome> {
   /// method for client side
   /// auto fetch the number of available ussd in the server phone, and set it to the variable _availableussd
   ///
-  void fetchNumberOfUSSD() async {
-    Singleton()
-        .db
-        .collection("app")
-        .doc('ussd_options')
-        .snapshots()
-        .listen((event) {
-      event.data()!.entries.forEach((element) {
-        if (element.key == "available_ussd") {
-          setState(() {
-            _availableUSSD = double.parse(element.value);
-          });
-        }
-      });
+  Future<void> fetchNumberOfUSSD(Function(double) onResult) async {
+    String firebaseAvailableUSSDField = "available_ussd";
+    if (_isChargingForOther) {
+      if (_otherCarrier == "Alfa") {
+        firebaseAvailableUSSDField = "available_ussd_alfa";
+      }
+    } else if (_carrier == "Alfa") {
+      firebaseAvailableUSSDField = "available_ussd_alfa";
+    }
+
+    Singleton().db.collection("app").doc('ussd_options').get().then((value) {
+      onResult(double.parse(value.get(firebaseAvailableUSSDField)));
     });
   }
 
@@ -238,7 +231,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   void listen() async {
-    Future.delayed(const Duration(seconds: 1), () async {
+    await Future.delayed(const Duration(seconds: 1), () async {
       final collRef = Singleton()
           .db
           .collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
@@ -256,7 +249,7 @@ class _ScreenHome extends State<ScreenHome> {
                 await Singleton().db.runTransaction((transaction) async {
                   transaction.delete(collection.docs[0].reference);
                 }).then((value) async {
-                  await checkUSSD();
+                  // await checkUSSD();
                   ModelServerChargeHistory modelServerChargeHistory =
                       ModelServerChargeHistory(
                           0,
@@ -271,25 +264,22 @@ class _ScreenHome extends State<ScreenHome> {
                     _listOfServerChargeHistory.insert(
                         0, modelServerChargeHistory);
                   });
-                  listen();
                 });
               },
               whenError: (onError) {
                 setState(() {
                   _error = onError.toString();
                 });
-                listen();
               });
-        } else {
-          listen();
-        }
+        } else {}
       }, onError: (e) {
         setState(() {
           _error = e.toString();
         });
-        listen();
       });
     });
+
+    listen();
   }
 
   /// method for client
@@ -803,11 +793,15 @@ class _ScreenHome extends State<ScreenHome> {
                 // if (await Helpers.requestSMSPermission(context)) {
                 if (Singleton().isConnected) {
                   // there is network access
-                  if (_availableUSSD > 1.3 &&
+                  double availableUSSD = 0.0;
+                  await fetchNumberOfUSSD((p0) {
+                    availableUSSD = p0;
+                  });
+                  if (availableUSSD > 1.3 &&
                       modelBundle.bundle + Singleton().transferTax <=
-                          _availableUSSD) {
-                    // this bundle can be charged, there is enough credits
+                          availableUSSD) {
                     if (_isChargingForOther) {
+                      // this bundle can be charged, there is enough credits
                       // user is charging for other phone number
                       if (_controllerOtherPhoneNumber.text.trim().isEmpty) {
                         // invalid phone number empty
