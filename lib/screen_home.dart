@@ -221,7 +221,7 @@ class _ScreenHome extends State<ScreenHome> {
       firebaseAvailableUSSDField = "available_ussd_alfa";
     }
 
-    Singleton().db.collection("app").doc('ussd_options').get().then((value) {
+    await Singleton().db.collection("app").doc('ussd_options').get().then((value) {
       onResult(double.parse(value.get(firebaseAvailableUSSDField)));
     });
   }
