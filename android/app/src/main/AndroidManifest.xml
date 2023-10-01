@@ -11,14 +11,14 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
 <!--               comment for client             -->
-    <uses-permission android:name="android.permission.SEND_SMS"/>
+<!--    <uses-permission android:name="android.permission.SEND_SMS"/>-->
 
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.SENDTO" />
-            <data android:scheme="smsto"/>
-        </intent>
-    </queries>
+<!--    <queries>-->
+<!--        <intent>-->
+<!--            <action android:name="android.intent.action.SENDTO" />-->
+<!--            <data android:scheme="smsto"/>-->
+<!--        </intent>-->
+<!--    </queries>-->
 
     <queries>
         <intent>

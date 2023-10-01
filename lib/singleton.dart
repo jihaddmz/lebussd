@@ -16,7 +16,7 @@ class Singleton {
     // initialization logic
   }
 
-  final List<String> listOfServerPhoneNumbers = ["70936314", "81803008"];
+  final List<String> listOfServerPhoneNumbers = ["70936314", "81503008"];
   double transferTax = 0.16;
   final String appName = "AlloDolar";
 

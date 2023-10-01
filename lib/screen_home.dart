@@ -221,7 +221,12 @@ class _ScreenHome extends State<ScreenHome> {
       firebaseAvailableUSSDField = "available_ussd_alfa";
     }
 
-    await Singleton().db.collection("app").doc('ussd_options').get().then((value) {
+    await Singleton()
+        .db
+        .collection("app")
+        .doc('ussd_options')
+        .get()
+        .then((value) {
       onResult(double.parse(value.get(firebaseAvailableUSSDField)));
     });
   }
@@ -230,7 +235,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// this method is for the server phone that will listen to insertion to docs in firestore in order to
   /// send ussd charge for the user
   ///
-  void listen() async {
+  Future<void> listen() async {
     await Future.delayed(const Duration(seconds: 1), () async {
       final collRef = Singleton()
           .db
@@ -264,22 +269,30 @@ class _ScreenHome extends State<ScreenHome> {
                     _listOfServerChargeHistory.insert(
                         0, modelServerChargeHistory);
                   });
+                  listen();
                 });
               },
               whenError: (onError) {
                 setState(() {
                   _error = onError.toString();
                 });
+                listen();
               });
-        } else {}
+        } else {
+          listen();
+        }
       }, onError: (e) {
         setState(() {
           _error = e.toString();
         });
+        listen();
+      }).catchError((error) {
+        setState(() {
+          _error = error.toString();
+        });
+        listen();
       });
     });
-
-    listen();
   }
 
   /// method for client
