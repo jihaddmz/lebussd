@@ -74,6 +74,9 @@ class _ScreenHome extends State<ScreenHome> {
       });
       pickRandomHeaderText();
       fetchIfAppIsForcedDisable();
+      Future.delayed(const Duration(seconds: 2), (){
+        Helpers.requestOneSignalPermission();
+      });
     }
   }
 
