@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'helper_dialog.dart';
@@ -6,6 +7,11 @@ import 'helper_dialog.dart';
 class Helpers {
   static void logD(String msg) {
     debugPrint('Jihad $msg');
+  }
+
+  static requestOneSignalPermission() {
+    // The promptForPushNotificationsWithUserResponse function will show the iOS or Android push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
+    OneSignal.shared.promptUserForPushNotificationPermission(fallbackToSettings: true);
   }
 
   static Future<bool> requestSMSPermission(BuildContext context) async {

@@ -10,15 +10,24 @@ import 'package:lebussd/screen_home.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:path/path.dart';
 import 'package:path_provider_android/path_provider_android.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'firebase_options.dart';
+import 'helpers.dart';
 
 bool isUserSignedIn() {
   return HelperSharedPreferences.getString("phone_number").isNotEmpty;
+}
+
+initializeOneSignal() {
+  //Remove this method to stop OneSignal Debugging
+  // OneSignal.shared.setLogLevel(logLevel, visualLevel)
+
+  OneSignal.shared.setAppId("26eea6a7-2010-4c63-859b-896b6e34fe2a");
 }
 
 Future<void> main() async {
@@ -29,6 +38,7 @@ Future<void> main() async {
   Singleton().sharedPreferences = await SharedPreferences.getInstance();
   Singleton().db = FirebaseFirestore.instance;
   HelpersPurchases().initPlatformState();
+  initializeOneSignal();
   runApp(MyApp());
 }
 
