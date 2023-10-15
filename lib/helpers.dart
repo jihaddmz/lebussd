@@ -11,7 +11,41 @@ class Helpers {
 
   static requestOneSignalPermission() {
     // The promptForPushNotificationsWithUserResponse function will show the iOS or Android push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
-    OneSignal.shared.promptUserForPushNotificationPermission(fallbackToSettings: true);
+    OneSignal.shared
+        .promptUserForPushNotificationPermission(fallbackToSettings: true);
+  }
+
+  static Future<bool> requestPhotoPermission(BuildContext context) async {
+    var photoStatus = await Permission.photos.request();
+
+    if (photoStatus.isGranted) {
+      // Permission granted. You can now use the gallery.
+      return true;
+    } else if (photoStatus.isDenied) {
+      if (context.mounted) {
+        HelperDialog().showDialogInfo(
+            "Attention!",
+            "In order to be able to pick an image, you should allow this permission",
+            context,
+            true, () {
+          Navigator.pop(context);
+          requestPhotoPermission(context);
+        });
+      }
+      // Permission denied. You might want to show a message to the user.
+    } else if (photoStatus.isPermanentlyDenied) {
+      if (context.mounted) {
+        HelperDialog().showDialogInfo(
+            "Attention!",
+            "In order to be able to pick an image, you should allow this permission",
+            context,
+            true, () {
+          Navigator.pop(context);
+          openAppSettings();
+        });
+      }
+    }
+    return false;
   }
 
   static Future<bool> requestSMSPermission(BuildContext context) async {

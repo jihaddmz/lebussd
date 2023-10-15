@@ -10,8 +10,8 @@ class HelpersPurchases {
     PurchasesConfiguration configuration = PurchasesConfiguration(
         "goog_XcmarpGGuGdsuSzcJrehkQZGCza"); // for android
     if (Platform.isIOS) {
-      configuration =
-          PurchasesConfiguration(""); // todo put the ios public api key
+      configuration = PurchasesConfiguration(
+          "appl_ZBIvezegIbZOFaXtagbIkkcvbSP"); // todo put the ios public api key
     }
     await Purchases.configure(configuration);
   }

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_sms/flutter_sms.dart';
 import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,7 +14,6 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
-import 'package:lebussd/main.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
 import 'package:lebussd/screen_contactus.dart';
@@ -23,6 +24,7 @@ import 'package:lebussd/sqlite_actions.dart';
 import 'package:lottie/lottie.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:ussd_advanced/ussd_advanced.dart';
 import 'package:ussd_service/ussd_service.dart';
 
 import 'helepr_purchases.dart';
@@ -74,7 +76,7 @@ class _ScreenHome extends State<ScreenHome> {
       });
       pickRandomHeaderText();
       fetchIfAppIsForcedDisable();
-      Future.delayed(const Duration(seconds: 2), (){
+      Future.delayed(const Duration(seconds: 2), () {
         Helpers.requestOneSignalPermission();
       });
     }
@@ -181,27 +183,36 @@ class _ScreenHome extends State<ScreenHome> {
       firebaseAvailableUSSDField = "available_ussd_alfa";
     }
     try {
-      String ussdResponseMessage = await UssdService.makeRequest(
-        subscriptionId,
-        code,
-        const Duration(
-            seconds: 60), // timeout (optional) - default is 10 seconds
-      );
-      if (onResponseResult != null) onResponseResult(ussdResponseMessage);
-      String onDeviceUSSD;
-      if (!isClientPhone()) {
-        if (_carrier == "Alfa") {
-          onDeviceUSSD = ussdResponseMessage
-              .split(" ")[0]
-              .trim()
-              .replaceFirst("\$", "")
-              .trim();
-        } else {
-          onDeviceUSSD = ussdResponseMessage.split(" ")[1].trim();
+      String? ussdResponseMessage;
+      if (Platform.isAndroid) {
+        ussdResponseMessage = await UssdService.makeRequest(
+          subscriptionId,
+          code,
+          const Duration(
+              seconds: 60), // timeout (optional) - default is 10 seconds
+        );
+      } else {
+        ussdResponseMessage =
+            await UssdAdvanced.sendAdvancedUssd(code: code, subscriptionId: -1);
+      }
+
+      if (ussdResponseMessage != null) {
+        if (onResponseResult != null) onResponseResult(ussdResponseMessage);
+        String onDeviceUSSD;
+        if (!isClientPhone()) {
+          if (_carrier == "Alfa") {
+            onDeviceUSSD = ussdResponseMessage
+                .split(" ")[0]
+                .trim()
+                .replaceFirst("\$", "")
+                .trim();
+          } else {
+            onDeviceUSSD = ussdResponseMessage.split(" ")[1].trim();
+          }
+          Singleton().db.collection("app").doc("ussd_options").set(
+              {firebaseAvailableUSSDField: onDeviceUSSD},
+              SetOptions(merge: true));
         }
-        Singleton().db.collection("app").doc("ussd_options").set(
-            {firebaseAvailableUSSDField: onDeviceUSSD},
-            SetOptions(merge: true));
       }
     } catch (e) {
       setState(() {
@@ -434,19 +445,24 @@ class _ScreenHome extends State<ScreenHome> {
           actions: [
             IconButton(
                 onPressed: () async {
-                  if (await Helpers.requestPhonePermission(context)) {
-                    if (context.mounted) {
-                      HelperDialog().showLoaderDialog(context);
-                      checkUSSD(onResponseResult: (result) {
-                        Navigator.pop(context);
-                        HelperDialog()
-                            .showDialogInfo(null, result, context, true, () {
+                  if (Platform.isAndroid) {
+                    if (await Helpers.requestPhonePermission(context)) {
+                      if (context.mounted) {
+                        HelperDialog().showLoaderDialog(context);
+                        checkUSSD(onResponseResult: (result) {
+                          Navigator.pop(context);
+                          HelperDialog()
+                              .showDialogInfo(null, result, context, true, () {
+                            Navigator.pop(context);
+                          });
+                        }, onResponseError: () {
                           Navigator.pop(context);
                         });
-                      }, onResponseError: () {
-                        Navigator.pop(context);
-                      });
+                      }
                     }
+                  } else {
+                    checkUSSD(
+                        onResponseError: () {}, onResponseResult: (result) {});
                   }
                 },
                 icon: const Icon(Icons.balance_outlined)),
@@ -734,46 +750,61 @@ class _ScreenHome extends State<ScreenHome> {
             .replaceFirst("961", "")
         : HelperSharedPreferences.getString("phone_number");
 
-    Purchases.purchasePackage(package).then((value) {
-      HelperDialog().showLoaderDialog(context);
-      // payment is successful
-      DateTime now = DateTime.now();
-      String chargingDate =
-          "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-      SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
-          id: 0,
-          bundle: modelBundle.bundle,
-          price: modelBundle.price,
-          date: chargingDate,
-          color: modelBundle.color,
-          phoneNumber: phoneNumber,
-          isTouch: modelBundle.isTouch));
-      sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber), () {
-        if (context.mounted) {
-          Navigator.pop(context);
-          HelperDialog().showDialogInfo(
-              "Success!",
-              forOther
-                  ? "Bundle has been charged to the desired phone number."
-                  : "Bundle has been charged to your phone number.",
-              context,
-              true, () {
+    try {
+      Purchases.purchasePackage(package).then((value) {
+        HelperDialog().showLoaderDialog(context);
+        // payment is successful
+        DateTime now = DateTime.now();
+        String chargingDate =
+            "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+        SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
+            id: 0,
+            bundle: modelBundle.bundle,
+            price: modelBundle.price,
+            date: chargingDate,
+            color: modelBundle.color,
+            phoneNumber: phoneNumber,
+            isTouch: modelBundle.isTouch));
+        sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber),
+            () {
+          if (context.mounted) {
             Navigator.pop(context);
-          },
-              note:
-                  "Note: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.");
-        }
+            HelperDialog().showDialogInfo(
+                "Success!",
+                forOther
+                    ? "Bundle has been charged to the desired phone number."
+                    : "Bundle has been charged to your phone number.",
+                context,
+                true, () {
+              Navigator.pop(context);
+            },
+                note:
+                    "Note: If bundle hasn't been added 5 minutes by max, please contact us in the contact section, and select the Bundle option.");
+          }
+        });
+      }).onError((error, stackTrace) {
+        // Payment failed
+        HelperDialog().showDialogInfo(
+            "Warning!",
+            "Purchase failed, make sure you entered the correct card details and you have enough money!",
+            context,
+            true, () {
+          Navigator.pop(context);
+        });
       });
-    }).onError((error, stackTrace) {
-      // Payment failed
-      HelperDialog().showDialogInfo(
-          "Warning!",
-          "Purchase failed, make sure you entered the correct card details and you have enough money!",
-          context,
-          true, () {
-        Navigator.pop(context);
-      });
-    });
+    } on PlatformException catch (e) {
+      var errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode != PurchasesErrorCode.purchaseCancelledError) {
+        // Payment failed
+        HelperDialog().showDialogInfo(
+            "Warning!",
+            "Purchase failed, make sure you entered the correct card details and you have enough money!",
+            context,
+            true, () {
+          Navigator.pop(context);
+        });
+      }
+    }
   }
 
   Widget item(ModelBundle modelBundle) {
