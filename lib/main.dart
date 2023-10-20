@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dart_ping/dart_ping.dart';
+import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
@@ -31,13 +32,14 @@ initializeOneSignal() {
 }
 
 Future<void> main() async {
+  DartPingIOS.register();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   Singleton().sharedPreferences = await SharedPreferences.getInstance();
   Singleton().db = FirebaseFirestore.instance;
-  HelpersPurchases().initPlatformState();
+  await HelpersPurchases().initPlatformState();
   initializeOneSignal();
   runApp(MyApp());
 }
@@ -74,14 +76,14 @@ class _MyApp extends State<MyApp> {
 
   void checkNetwork() async {
     await Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1), () {
+      await Future.delayed(const Duration(seconds: 5), () {
         // Create ping object with desired args
         final ping = Ping('google.com', count: 1);
 
         // Begin ping process and listen for output
         ping.stream.listen((event) {
           if (event.summary != null) {
-            if (event.summary!.received == 1) {
+            if (event.summary!.received >= 1) {
               Singleton().isConnected = true;
             } else {
               Singleton().isConnected = false;
@@ -115,41 +117,51 @@ class _MyApp extends State<MyApp> {
   Widget build(BuildContext context) {
     return KeyedSubtree(
         key: _key,
-        child: MaterialApp(
-            title: 'LebUSSD',
-            theme: ThemeData(
-              colorScheme: const ColorScheme(
-                  brightness: Brightness.dark,
-                  primary: Color.fromARGB(255, 37, 132, 241),
-                  onPrimary: Colors.white,
-                  secondary: Colors.grey,
-                  onSecondary: Color.fromARGB(100, 37, 132, 241),
-                  error: Color.fromARGB(160, 167, 7, 7),
-                  onError: Colors.white,
-                  background: Color.fromARGB(255, 255, 255, 255),
-                  onBackground: Colors.black,
-                  surface: Color.fromARGB(255, 255, 255, 255),
-                  onSurface: Colors.black),
-              textTheme: const TextTheme(
-                displayLarge:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
-                displaySmall: TextStyle(fontSize: 14),
-                labelLarge:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                labelMedium:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              // fontFamily: 'Poppins',
-              fontFamily: 'Brandmark1 Bold',
-              useMaterial3: true,
-            ),
-            home: isUserSignedIn()
-                ? ScreenHome(
-                    callbackForWaitToRestart: () {
-                      waitToRestartApp();
-                    },
-                  )
-                : ScreenWelcome()));
+        child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              FocusScopeNode currentFocus = FocusScope.of(context);
+
+              if (!currentFocus.hasPrimaryFocus &&
+                  currentFocus.focusedChild != null) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              }
+            },
+            child: MaterialApp(
+                title: 'LebUSSD',
+                theme: ThemeData(
+                  colorScheme: const ColorScheme(
+                      brightness: Brightness.dark,
+                      primary: Color.fromARGB(255, 37, 132, 241),
+                      onPrimary: Colors.white,
+                      secondary: Colors.grey,
+                      onSecondary: Color.fromARGB(100, 37, 132, 241),
+                      error: Color.fromARGB(160, 167, 7, 7),
+                      onError: Colors.white,
+                      background: Color.fromARGB(255, 255, 255, 255),
+                      onBackground: Colors.black,
+                      surface: Color.fromARGB(255, 255, 255, 255),
+                      onSurface: Colors.black),
+                  textTheme: const TextTheme(
+                    displayLarge:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                    displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
+                    displaySmall: TextStyle(fontSize: 14),
+                    labelLarge:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                    labelMedium:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  // fontFamily: 'Poppins',
+                  fontFamily: 'Brandmark1 Bold',
+                  useMaterial3: true,
+                ),
+                home: isUserSignedIn()
+                    ? ScreenHome(
+                        callbackForWaitToRestart: () {
+                          waitToRestartApp();
+                        },
+                      )
+                    : ScreenWelcome())));
   }
 }

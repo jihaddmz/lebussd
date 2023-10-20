@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lebussd/helpers.dart';
 
 import 'colors.dart';
 import 'components/options_selector.dart';
@@ -92,6 +93,7 @@ class _ScreenContactUs extends State<ScreenContactUs> {
                     list: [bug, bundle, other],
                     onTap: (value) {
                       setState(() {
+                        _controllerMessage.clear();
                         _selectedOption = value;
                       });
                     },
@@ -139,8 +141,11 @@ class _ScreenContactUs extends State<ScreenContactUs> {
                             child: Row(
                               children: [
                                 GestureDetector(
-                                  onTap: () {
-                                    _getFromGallery();
+                                  onTap: () async {
+                                    if (await Helpers.requestPhotoPermission(
+                                        context)) {
+                                      _getFromGallery();
+                                    }
                                   },
                                   child: const Text("Attach:*",
                                       style: TextStyle(
