@@ -17,6 +17,8 @@ class Singleton {
   }
 
   final List<String> listOfServerPhoneNumbers = ["70936314", "81503008"];
+  // final List<String> listOfServerPhoneNumbers = ["70936314"];
+  // final List<String> listOfServerPhoneNumbers = ["81503008"];
   double transferTax = 0.16;
   final String appName = "AlloDolar";
 
@@ -25,7 +27,8 @@ class Singleton {
   List<ModelBundle> listOfBundle = [];
   final List<String> listOfCarriers = const ["Touch", "Alfa"];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
-    const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+    const BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined), label: 'Home'),
     const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
     const BottomNavigationBarItem(
         icon: Icon(Icons.contact_support_outlined), label: 'Contact Us'),

@@ -36,10 +36,10 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>This permission is used to allow the app to display your contacts</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This permission is used to allow the app to display your gallery</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This permission is used to allow the app to send you targeted notifications</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This permission is used to allow the app to display your gallery</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -50,6 +50,8 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIStatusBarStyle</key>
+	<string></string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
