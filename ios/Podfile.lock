@@ -639,6 +639,9 @@ PODS:
     - firebase_core
     - Flutter
     - nanopb (< 2.30910.0, >= 2.30908.0)
+  - connectivity_plus (0.0.1):
+    - Flutter
+    - ReachabilitySwift
   - Firebase/CoreOnly (10.15.0):
     - FirebaseCore (= 10.15.0)
   - Firebase/Firestore (10.15.0):
@@ -776,6 +779,7 @@ PODS:
     - PurchasesHybridCommon (= 6.1.0)
   - PurchasesHybridCommon (6.1.0):
     - RevenueCat (= 4.25.7)
+  - ReachabilitySwift (5.0.0)
   - RevenueCat (4.25.7)
   - shared_preferences_foundation (0.0.1):
     - Flutter
@@ -790,6 +794,7 @@ PODS:
 
 DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
+  - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - Flutter (from `Flutter`)
   - flutter_email_sender (from `.symlinks/plugins/flutter_email_sender/ios`)
@@ -823,11 +828,14 @@ SPEC REPOS:
     - OneSignalXCFramework
     - PromisesObjC
     - PurchasesHybridCommon
+    - ReachabilitySwift
     - RevenueCat
 
 EXTERNAL SOURCES:
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
+  connectivity_plus:
+    :path: ".symlinks/plugins/connectivity_plus/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   Flutter:
@@ -863,6 +871,7 @@ SPEC CHECKSUMS:
   abseil: 926fb7a82dc6d2b8e1f2ed7f3a718bce691d1e46
   BoringSSL-GRPC: 3175b25143e648463a56daeaaa499c6cb86dad33
   cloud_firestore: 094365b1927477f45478886c68decec0080f51b7
+  connectivity_plus: bf0076dd84a130856aa636df1c71ccaff908fa1d
   Firebase: 66043bd4579e5b73811f96829c694c7af8d67435
   firebase_core: 28e84c2a4fcf6a50ef83f47b145ded8c1fa331e4
   FirebaseCore: 2cec518b43635f96afe7ac3a9c513e47558abd2e
@@ -887,12 +896,13 @@ SPEC CHECKSUMS:
   PromisesObjC: c50d2056b5253dadbd6c2bea79b0674bd5a52fa4
   purchases_flutter: 30998775345137058b3b8c9e04436490d1783da1
   PurchasesHybridCommon: 195de137f1993af1a034099773eed15bf771b1d4
+  ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
   RevenueCat: a70e08e45bd96bea5187dbd7b18f5f1db39646be
   shared_preferences_foundation: 5b919d13b803cadd15ed2dc053125c68730e5126
   sqflite: 31f7eba61e3074736dff8807a9b41581e4f7f15a
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
   ussd_advanced: 7ae2d8ff45f7cf9f4fa62421c683ccfda8d36639
 
-PODFILE CHECKSUM: b5478a6513cbeeac83708d731990c6eb9a3b184d
+PODFILE CHECKSUM: 5cbb6d8b96052456def4839d963fc5876a35c43f
 
 COCOAPODS: 1.13.0

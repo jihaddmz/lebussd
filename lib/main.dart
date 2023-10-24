@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dart_ping/dart_ping.dart';
 import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -57,7 +58,7 @@ class _MyApp extends State<MyApp> {
   _MyApp() {
     if (Platform.isAndroid) PathProviderAndroid.registerWith();
     createDatabase();
-    checkNetwork();
+    checkNetwork1();
   }
 
   Future<void> createDatabase() async {
@@ -92,6 +93,23 @@ class _MyApp extends State<MyApp> {
             Singleton().isConnected = false;
           }
         });
+      });
+
+      return true;
+    });
+  }
+
+  void checkNetwork1() async {
+    await Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1), () async {
+        final connectivityResult = await (Connectivity().checkConnectivity());
+
+        if (connectivityResult == ConnectivityResult.mobile ||
+            connectivityResult == ConnectivityResult.wifi) {
+          Singleton().isConnected = true;
+        } else {
+          Singleton().isConnected = false;
+        }
       });
 
       return true;
