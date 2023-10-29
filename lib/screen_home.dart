@@ -68,7 +68,7 @@ class _ScreenHome extends State<ScreenHome> {
       // checkUSSD();
       listen();
       removeLast10ServerChargeHistory();
-      waitToCheckBalance();
+      // waitToCheckBalance();
       widget.callbackForWaitToRestart();
     } else {
       setState(() {
@@ -268,7 +268,7 @@ class _ScreenHome extends State<ScreenHome> {
                 await Singleton().db.runTransaction((transaction) async {
                   transaction.delete(collection.docs[0].reference);
                 }).then((value) async {
-                  // await checkUSSD();
+                  await checkUSSD();
                   ModelServerChargeHistory modelServerChargeHistory =
                       ModelServerChargeHistory(
                           0,
