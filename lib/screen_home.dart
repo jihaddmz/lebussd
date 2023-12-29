@@ -250,7 +250,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   Future<void> listen() async {
-    await Future.delayed(const Duration(seconds: 1), () async {
+    await Future.delayed(const Duration(seconds: 8), () async {
       final collRef = Singleton()
           .db
           .collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
