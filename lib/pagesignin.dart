@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
-import 'package:lebussd/helper_dialog.dart';
-import 'package:lebussd/screen_home.dart';
+import 'package:lebussd/screen_navigator.dart';
 
 import 'singleton.dart';
 
@@ -49,7 +48,7 @@ class _SigninPage extends State<SigninPage> {
                         .then((value) {
                       Navigator.of(context).push(
                           MaterialPageRoute(builder: (BuildContext context) {
-                        return ScreenHome(
+                        return ScreenNavigator(
                           callbackForWaitToRestart: () {},
                         );
                       }));

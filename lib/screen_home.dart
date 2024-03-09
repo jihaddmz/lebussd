@@ -16,8 +16,6 @@ import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
-import 'package:lebussd/screen_contactus.dart';
-import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
@@ -44,7 +42,6 @@ class _ScreenHome extends State<ScreenHome> {
   String _carrier = "Touch";
   String _error =
       ""; // error happened on the server phone during charging for the client
-  final int _selectedIndex = 0;
   bool _isChargingForOther = false;
   final TextEditingController _controllerOtherPhoneNumber =
       TextEditingController();
@@ -62,7 +59,7 @@ class _ScreenHome extends State<ScreenHome> {
       _carrier = HelperSharedPreferences.getString("carrier");
     });
 
-    if (!isClientPhone()) {
+    if (!Helpers.isClientPhone()) {
       // it is the server phone number
       requestServerPhonePermissions();
       // checkUSSD();
@@ -199,7 +196,7 @@ class _ScreenHome extends State<ScreenHome> {
       if (ussdResponseMessage != null) {
         if (onResponseResult != null) onResponseResult(ussdResponseMessage);
         String onDeviceUSSD;
-        if (!isClientPhone()) {
+        if (!Helpers.isClientPhone()) {
           if (_carrier == "Alfa") {
             onDeviceUSSD = ussdResponseMessage
                 .split(" ")[0]
@@ -343,19 +340,6 @@ class _ScreenHome extends State<ScreenHome> {
     });
   }
 
-  ///
-  /// method to check if this device is a client or the server phone
-  ///
-  bool isClientPhone() {
-    for (var number in Singleton().listOfServerPhoneNumbers) {
-      if (HelperSharedPreferences.getString("phone_number") == number) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   List<Widget> itemsOfServerChargeHistory() {
     List<Widget> listOfServerChargeHistory = [];
     for (var item in _listOfServerChargeHistory) {
@@ -407,7 +391,7 @@ class _ScreenHome extends State<ScreenHome> {
 
   @override
   Widget build(BuildContext context) {
-    if (isClientPhone()) {
+    if (Helpers.isClientPhone()) {
       fetchBundlesFromRevenueCat();
     } else {
       Future.delayed(const Duration(seconds: 5), () {
@@ -416,28 +400,6 @@ class _ScreenHome extends State<ScreenHome> {
     }
 
     return Scaffold(
-        bottomNavigationBar: isClientPhone()
-            ? BottomNavigationBar(
-                onTap: (index) {
-                  setState(() {
-                    if (_selectedIndex != index) {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(builder: (BuildContext context) {
-                        if (index == 1) {
-                          return ScreenPurchaseHistory();
-                        } else {
-                          return ScreenContactUs();
-                        }
-                      }));
-                    }
-                  });
-                },
-                selectedItemColor: primaryColor,
-                unselectedItemColor: Colors.black,
-                items: Singleton().listOfBottomNavItems,
-                currentIndex: _selectedIndex,
-              )
-            : null,
         appBar: AppBar(
           leading: const Image(image: AssetImage("images/logo.png")),
           title: Text(Singleton().appName,
@@ -492,20 +454,20 @@ class _ScreenHome extends State<ScreenHome> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Visibility(
-                      visible: !isClientPhone(),
+                      visible: !Helpers.isClientPhone(),
                       child: Column(
                         children: itemsOfServerChargeHistory(),
                       )),
                   // Load a Lottie file from your assets
                   Visibility(
-                      visible: _listOfBundle.isEmpty && isClientPhone(),
+                      visible: _listOfBundle.isEmpty && Helpers.isClientPhone(),
                       child:
                           Lottie.asset('assets/loading.json', animate: true)),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Visibility(
-                          visible: isClientPhone(),
+                          visible: Helpers.isClientPhone(),
                           child: Card(
                               child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -526,7 +488,7 @@ class _ScreenHome extends State<ScreenHome> {
                             ),
                           ))),
                       Visibility(
-                          visible: !isClientPhone(),
+                          visible: !Helpers.isClientPhone(),
                           child: SizedBox(
                               height: MediaQuery.of(context).size.height,
                               child: Center(
@@ -536,7 +498,7 @@ class _ScreenHome extends State<ScreenHome> {
                                 style: Theme.of(context).textTheme.displayLarge,
                               )))),
                       Visibility(
-                          visible: isClientPhone(),
+                          visible: Helpers.isClientPhone(),
                           child: Column(
                             children: [
                               Row(
@@ -687,7 +649,7 @@ class _ScreenHome extends State<ScreenHome> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Visibility(
-                                      visible: isClientPhone(),
+                                      visible: Helpers.isClientPhone(),
                                       child: Padding(
                                         padding: const EdgeInsets.only(top: 50),
                                         child: Text(
@@ -707,7 +669,7 @@ class _ScreenHome extends State<ScreenHome> {
                                 ],
                               ),
                               Visibility(
-                                  visible: isClientPhone(),
+                                  visible: Helpers.isClientPhone(),
                                   child: Padding(
                                       padding: const EdgeInsets.only(top: 20),
                                       child: Visibility(
