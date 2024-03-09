@@ -468,25 +468,28 @@ class _ScreenHome extends State<ScreenHome> {
                     children: [
                       Visibility(
                           visible: Helpers.isClientPhone(),
-                          child: Card(
-                              child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 30),
-                            child: Container(
-                              alignment: Alignment.center,
-                              child: AnimatedTextKit(
-                                animatedTexts: [
-                                  TyperAnimatedText(
-                                    _textHeader,
-                                    textAlign: TextAlign.center,
-                                    textStyle: GoogleFonts.croissantOne(),
-                                  )
-                                ],
-                                totalRepeatCount: 500,
-                                pause: const Duration(seconds: 5),
+                          child: SizedBox(
+                            height: 100,
+                            child: Card(
+                                child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 10),
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: AnimatedTextKit(
+                                  animatedTexts: [
+                                    TyperAnimatedText(
+                                      _textHeader,
+                                      textAlign: TextAlign.center,
+                                      textStyle: GoogleFonts.croissantOne(),
+                                    )
+                                  ],
+                                  totalRepeatCount: 500,
+                                  pause: const Duration(seconds: 5),
+                                ),
                               ),
-                            ),
-                          ))),
+                            )),
+                          )),
                       Visibility(
                           visible: !Helpers.isClientPhone(),
                           child: SizedBox(
