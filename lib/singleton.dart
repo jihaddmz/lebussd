@@ -29,7 +29,8 @@ class Singleton {
   List<BottomNavigationBarItem> listOfBottomNavItems = [
     const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ""),
     const BottomNavigationBarItem(icon: Icon(Icons.history), label: ""),
-    const BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: ""),
+    const BottomNavigationBarItem(
+        icon: Icon(Icons.leaderboard_outlined), label: ""),
     const BottomNavigationBarItem(
         icon: Icon(Icons.contact_support_outlined), label: ""),
   ];
