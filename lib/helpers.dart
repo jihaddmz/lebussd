@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/singleton.dart';
@@ -166,5 +168,14 @@ class Helpers {
       // You might want to guide the user to the app settings.
     }
     return false;
+  }
+
+  static Future<bool> isConnected() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
   }
 }

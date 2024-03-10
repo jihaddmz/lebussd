@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
+import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/helper_firebase.dart';
+import 'package:lebussd/helpers.dart';
 import 'package:lebussd/screen_navigator.dart';
 
 import 'singleton.dart';
@@ -54,22 +57,61 @@ class _SigninPage extends State<SigninPage> {
                     return;
                   }
 
-                  HelperSharedPreferences.setString("phone_number", phoneNumber)
-                      .then((value) {
-                    HelperSharedPreferences.setString("name", username)
-                        .then((value) {
-                      HelperSharedPreferences.setString(
-                              "carrier", _carrierValue)
-                          .then((value) {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(builder: (BuildContext context) {
-                          return ScreenNavigator(
-                            callbackForWaitToRestart: () {},
-                          );
-                        }));
-                      });
+                  if (await Helpers.isConnected()) {
+                    HelperDialog().showLoaderDialog(context);
+
+                    String numberOfCredits = "0";
+                    bool isSignedInTrue = false;
+
+                    await HelperFirebase.isUserAlreadySignedIn(phoneNumber,
+                        (docmentSnapshot) {
+                      Map<String, dynamic> map =
+                          HelperFirebase.getUserCredentials(docmentSnapshot);
+
+                      if (map["isSignedIn"]) {
+                        isSignedInTrue = true;
+                        // isSignedIn is true, so this user can't sign in
+                        Navigator.pop(context);
+                        HelperDialog().showDialogInfo(
+                            "Warning!",
+                            "There is a user already signed in with this phone number!",
+                            context,
+                            true, () {
+                          Navigator.pop(context);
+                        });
+                      } else {
+                        // isSignedIn is false, so this user can sign in
+                        numberOfCredits = map["numberOfCredits"];
+                      }
                     });
-                  });
+
+                    if (!isSignedInTrue) {
+                      await HelperFirebase.createUserEntry(
+                          phoneNumber, username,
+                          numberOfCredits: numberOfCredits);
+                      HelperSharedPreferences.setString(
+                              "phone_number", phoneNumber)
+                          .then((value) {
+                        HelperSharedPreferences.setString("name", username)
+                            .then((value) {
+                          HelperSharedPreferences.setString(
+                                  "carrier", _carrierValue)
+                              .then((value) {
+                            Navigator.pop(context);
+                            Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) {
+                              return ScreenNavigator(
+                                callbackForWaitToRestart: () {},
+                              );
+                            }), (route) => false);
+                          });
+                        });
+                      });
+                    }
+                  } else {
+                    HelperDialog().showDialogNotConnected(context);
+                  }
                 },
                 style: ButtonStyle(
                   foregroundColor:
@@ -108,9 +150,7 @@ class _SigninPage extends State<SigninPage> {
                   });
                 },
                 controller: _controllerUsername,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(13)
-                ],
+                inputFormatters: [LengthLimitingTextInputFormatter(13)],
                 decoration: InputDecoration(
                     enabledBorder: const OutlineInputBorder(
                         borderSide: BorderSide(
@@ -136,9 +176,7 @@ class _SigninPage extends State<SigninPage> {
                   },
                   keyboardType: TextInputType.phone,
                   controller: _controllerPhoneNumber,
-                  inputFormatters: [
-                  LengthLimitingTextInputFormatter(8)
-                ],
+                  inputFormatters: [LengthLimitingTextInputFormatter(8)],
                   decoration: InputDecoration(
                       enabledBorder: const OutlineInputBorder(
                           borderSide: BorderSide(

@@ -14,6 +14,7 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/helper_firebase.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
 import 'package:lebussd/screen_welcome.dart';
@@ -431,19 +432,25 @@ class _ScreenHome extends State<ScreenHome> {
             IconButton(
                 onPressed: () {
                   HelperDialog().showDialogAffirmation(context, "Attention!",
-                      "Are you sure you want to sign out?", () {
-                    HelperSharedPreferences.setString("phone_number", "")
-                        .then((value) {
-                      HelperSharedPreferences.setString("name", "")
+                      "Are you sure you want to sign out?", () async {
+                    Navigator.pop(context);
+                    if (await Helpers.isConnected()) {
+                      HelperDialog().showLoaderDialog(context);
+                      await HelperFirebase.updateIsSignedOut();
+                      HelperSharedPreferences.setString("phone_number", "")
                           .then((value) {
-                            Navigator.pop(context);
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (context) => ScreenWelcome()),
-                          (route) => false);
-                          });
-                      
-                    });
+                        HelperSharedPreferences.setString("name", "")
+                            .then((value) {
+                          Navigator.pop(context);
+                          Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => ScreenWelcome()),
+                              (route) => false);
+                        });
+                      });
+                    } else {
+                      HelperDialog().showDialogNotConnected(context);
+                    }
                   }, () {
                     Navigator.pop(context);
                   });

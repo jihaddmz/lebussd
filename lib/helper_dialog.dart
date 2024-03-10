@@ -43,6 +43,16 @@ class HelperDialog {
         });
   }
 
+  void showDialogNotConnected(BuildContext context) {
+    showDialogInfo(
+        "Warning!",
+        "You don't have network access! Pls connect and try again.",
+        context,
+        true, () {
+      Navigator.pop(context);
+    });
+  }
+
   void showLoaderDialog(BuildContext context) {
     showDialog(
         barrierDismissible: false,
