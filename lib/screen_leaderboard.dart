@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_leaderboard_bottom.dart';
 import 'package:lebussd/components/item_leaderboard_top.dart';
@@ -18,12 +19,28 @@ class ScreenLeaderboard extends StatefulWidget {
 
 class _ScreenLeaderboard extends State<ScreenLeaderboard> {
   List<ModelLeaderboard> _list = [];
+  late final String firstReward;
+  late final String secondReward;
+  late final String thirdReward;
 
   @override
   void initState() {
     super.initState();
 
     fetchAllUsers();
+    fetchNumberOfRewardsStored();
+  }
+
+  Future<void> fetchNumberOfRewardsStored() async {
+    if (await Helpers.isConnected()) {
+      await HelperFirebase.fetchNumberOfRewardsStored().then((value) async {
+        if (value != null) {
+          firstReward = value["firstReward"];
+          secondReward = value["secondReward"];
+          thirdReward = value["thirdReward"];
+        }
+      });
+    }
   }
 
   Future<void> fetchAllUsers() async {
@@ -72,7 +89,7 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
               onPressed: () {
                 HelperDialog().showDialogInfo(
                     "Info",
-                    "- The First will get 5 credits\n- The Second will get 3 credits\n- The Third will get 2 credits\n\nEach will receive their rewards monthly on the 1st of the second month.",
+                    "- The First will get $firstReward credits\n- The Second will get $secondReward credits\n- The Third will get $thirdReward credits\n\nEach will receive their rewards monthly on the 1st of the second month.",
                     context,
                     true, () {
                   Navigator.pop(context);

@@ -86,4 +86,15 @@ class HelperFirebase {
       }
     });
   }
+
+  static Future<DocumentSnapshot<Map<String, dynamic>>?>
+      fetchNumberOfRewardsStored() async {
+    DocumentSnapshot<Map<String, dynamic>>? result;
+
+    await Singleton().db.collection("app").doc("leaderboards").get().then((value) {
+      result = value;
+    });
+
+    return result;
+  }
 }
