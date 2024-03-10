@@ -72,7 +72,7 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
               onPressed: () {
                 HelperDialog().showDialogInfo(
                     "Info",
-                    "- The First will get 5 credits\n- The Second will get 3 credits\n- The Third will get 2 credits\n\nEach will receive their bonuses monthly on the 1st of the second month.",
+                    "- The First will get 5 credits\n- The Second will get 3 credits\n- The Third will get 2 credits\n\nEach will receive their rewards monthly on the 1st of the second month.",
                     context,
                     true, () {
                   Navigator.pop(context);
@@ -86,30 +86,9 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
           FractionallySizedBox(
             heightFactor: 0.45,
             widthFactor: 1,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-              child: Visibility(
-                  visible: _list.length >= 3,
-                  child: Stack(children: listOfLeaderboardsTop()
-                      // Positioned(
-                      //   bottom: 0,
-                      //   left: -5,
-                      //   child:
-                      //       ItemLeaderboardTop(_list.elementAt(1), 2, context),
-                      // ),
-                      // Positioned(
-                      //     bottom: 0,
-                      //     left: MediaQuery.of(context).size.width * 0.68,
-                      //     child: ItemLeaderboardTop(
-                      //         _list.elementAt(2), 3, context)),
-                      // Positioned(
-                      //     bottom: 0,
-                      //     left: MediaQuery.of(context).size.width * 0.3,
-                      //     child: ItemLeaderboardTop(
-                      //         _list.elementAt(0), 1, context)),
-
-                      )),
-            ),
+            child: Visibility(
+                visible: _list.length >= 3,
+                child: Stack(children: listOfLeaderboardsTop())),
           ),
           Align(
             alignment: Alignment.bottomCenter,

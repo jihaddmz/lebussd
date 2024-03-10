@@ -4,8 +4,8 @@ import 'package:lebussd/models/model_leaderboard.dart';
 
 Widget ItemLeaderboardTop(
     ModelLeaderboard modelLeaderboard, int position, BuildContext context) {
-      bool isThisItemForThisUser = modelLeaderboard.phoneNumber ==
-                    HelperSharedPreferences.getString("phone_number");
+  bool isThisItemForThisUser = modelLeaderboard.phoneNumber ==
+      HelperSharedPreferences.getString("phone_number");
   double containerHeight = 0;
   double positionTextSize = 0;
   double nameTextSize = 0;
@@ -16,7 +16,7 @@ Widget ItemLeaderboardTop(
   if (position == 1) {
     containerHeight = 150;
     positionTextSize = 60;
-    nameTextSize = 25;
+    nameTextSize = 20;
     avatarTextSize = 30;
     avatarRadius = 30;
     avatarColor = const Color(0xffFF3B30);
@@ -25,7 +25,7 @@ Widget ItemLeaderboardTop(
     positionTextSize = 60;
     positionTextSize = 45;
     avatarColor = const Color(0xffFF9500);
-    nameTextSize = 20;
+    nameTextSize = 17;
     avatarTextSize = 25;
     avatarRadius = 25;
   } else {
@@ -51,7 +51,9 @@ Widget ItemLeaderboardTop(
         padding: const EdgeInsets.only(top: 10),
         child: Text(
           isThisItemForThisUser ? "You" : modelLeaderboard.name,
-          style: TextStyle(fontSize: nameTextSize, color: isThisItemForThisUser ? Colors.red : Colors.black),
+          style: TextStyle(
+              fontSize: nameTextSize,
+              color: isThisItemForThisUser ? Colors.red : Colors.black),
         ),
       ),
       Padding(

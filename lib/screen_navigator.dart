@@ -38,7 +38,7 @@ class _ScreenNavigator extends State<ScreenNavigator> {
               )
             : null,
         extendBody: true,
-        body: _selectedIndex == 0
+        body: Padding(padding: EdgeInsets.only(bottom: _selectedIndex == 2 ? 0 : 100), child: _selectedIndex == 0
             ? ScreenHome(
                 callbackForWaitToRestart: widget.callbackForWaitToRestart)
             : _selectedIndex == 1
@@ -51,6 +51,6 @@ class _ScreenNavigator extends State<ScreenNavigator> {
                           });
                         },
                       )
-                    : ScreenContactUs());
+                    : ScreenContactUs(),) );
   }
 }
