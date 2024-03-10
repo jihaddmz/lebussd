@@ -736,22 +736,23 @@ class _ScreenHome extends State<ScreenHome> {
         : HelperSharedPreferences.getString("phone_number");
 
     try {
-      Purchases.purchasePackage(package).then((value) {
-        HelperDialog().showLoaderDialog(context);
+      Purchases.purchasePackage(package).then((value) async {
         // payment is successful
+        HelperDialog().showLoaderDialog(context);
         DateTime now = DateTime.now();
         String chargingDate =
             "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-        SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
-            id: 0,
-            bundle: modelBundle.bundle,
-            price: modelBundle.price,
-            date: chargingDate,
-            color: modelBundle.color,
-            phoneNumber: phoneNumber,
-            isTouch: modelBundle.isTouch));
         sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber),
-            () {
+            () async {
+          await HelperFirebase.updateUserNumberOfCredits(modelBundle.bundle);
+          await SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
+              id: 0,
+              bundle: modelBundle.bundle,
+              price: double.parse(modelBundle.price.toStringAsFixed(2)),
+              date: chargingDate,
+              color: modelBundle.color,
+              phoneNumber: phoneNumber,
+              isTouch: modelBundle.isTouch));
           if (context.mounted) {
             Navigator.pop(context);
             HelperDialog().showDialogInfo(

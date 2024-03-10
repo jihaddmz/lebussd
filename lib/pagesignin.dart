@@ -6,6 +6,7 @@ import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/helper_firebase.dart';
 import 'package:lebussd/helpers.dart';
 import 'package:lebussd/screen_navigator.dart';
+import 'package:lebussd/sqlite_actions.dart';
 
 import 'singleton.dart';
 
@@ -63,27 +64,43 @@ class _SigninPage extends State<SigninPage> {
                     String numberOfCredits = "0";
                     bool isSignedInTrue = false;
 
-                    await HelperFirebase.isUserAlreadySignedIn(phoneNumber,
-                        (docmentSnapshot) {
-                      Map<String, dynamic> map =
-                          HelperFirebase.getUserCredentials(docmentSnapshot);
+                    if (HelperSharedPreferences.getString("phone_number")
+                            .isEmpty &&
+                        HelperSharedPreferences.getString("name").isEmpty) {
+                      // the user has signed in before with his phone number and username
+                      await HelperFirebase.isUserAlreadySignedIn(phoneNumber,
+                          (docmentSnapshot) {
+                        Map<String, dynamic> map =
+                            HelperFirebase.getUserCredentials(docmentSnapshot);
 
-                      if (map["isSignedIn"]) {
-                        isSignedInTrue = true;
-                        // isSignedIn is true, so this user can't sign in
-                        Navigator.pop(context);
-                        HelperDialog().showDialogInfo(
-                            "Warning!",
-                            "There is a user already signed in with this phone number!",
-                            context,
-                            true, () {
+                        if (map["isSignedIn"]) {
+                          isSignedInTrue = true;
+                          // isSignedIn is true, so this user can't sign in
                           Navigator.pop(context);
-                        });
-                      } else {
-                        // isSignedIn is false, so this user can sign in
-                        numberOfCredits = map["numberOfCredits"];
-                      }
-                    });
+                          HelperDialog().showDialogInfo(
+                              "Warning!",
+                              "There is a user already signed in with this phone number!",
+                              context,
+                              true, () {
+                            Navigator.pop(context);
+                          });
+                        } else {
+                          // isSignedIn is false, so this user can sign in
+                          numberOfCredits = map["numberOfCredits"];
+                        }
+                      });
+                    } else {
+                      // the user hasn't signed before with the new details (phone number and username)
+                      await SqliteActions()
+                          .getAllPurchasesHistory()
+                          .then((value) {
+                        for (var i = 0; i < value.length; i++) {
+                          numberOfCredits =
+                              (double.parse(numberOfCredits) + value[i].bundle)
+                                  .toString();
+                        }
+                      });
+                    }
 
                     if (!isSignedInTrue) {
                       await HelperFirebase.createUserEntry(
@@ -96,7 +113,9 @@ class _SigninPage extends State<SigninPage> {
                             .then((value) {
                           HelperSharedPreferences.setString(
                                   "carrier", _carrierValue)
-                              .then((value) {
+                              .then((value) async {
+                            await HelperSharedPreferences.setString(
+                                "number_of_credits", numberOfCredits);
                             Navigator.pop(context);
                             Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(

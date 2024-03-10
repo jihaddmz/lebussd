@@ -91,10 +91,28 @@ class HelperFirebase {
       fetchNumberOfRewardsStored() async {
     DocumentSnapshot<Map<String, dynamic>>? result;
 
-    await Singleton().db.collection("app").doc("leaderboards").get().then((value) {
+    await Singleton()
+        .db
+        .collection("app")
+        .doc("leaderboards")
+        .get()
+        .then((value) {
       result = value;
     });
 
     return result;
+  }
+
+  static Future<void> updateUserNumberOfCredits(double chosenBundle) async {
+    Map<String, dynamic> map = {};
+    map["numberOfCredits"] =
+        (double.parse(HelperSharedPreferences.getString("number_of_credits")) +
+                chosenBundle)
+            .toString();
+    await Singleton()
+        .db
+        .collection("users")
+        .doc(HelperSharedPreferences.getString("phone_number"))
+        .set(map, SetOptions(merge: true));
   }
 }
