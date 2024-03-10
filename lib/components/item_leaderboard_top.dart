@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lebussd/models/model_leaderboard.dart';
-import 'package:path/path.dart';
 
 Widget ItemLeaderboardTop(
     ModelLeaderboard modelLeaderboard, int position, BuildContext context) {

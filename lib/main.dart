@@ -21,7 +21,7 @@ import 'package:sqflite/sqflite.dart';
 import 'firebase_options.dart';
 
 bool isUserSignedIn() {
-  return HelperSharedPreferences.getString("phone_number").isNotEmpty;
+  return HelperSharedPreferences.getString("phone_number").isNotEmpty && HelperSharedPreferences.getString("name").isNotEmpty;
 }
 
 initializeOneSignal() {

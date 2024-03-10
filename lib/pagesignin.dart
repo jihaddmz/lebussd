@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/screen_navigator.dart';
@@ -12,7 +13,9 @@ class SigninPage extends StatefulWidget {
 
 class _SigninPage extends State<SigninPage> {
   final TextEditingController _controllerPhoneNumber = TextEditingController();
+  final TextEditingController _controllerUsername = TextEditingController();
   String? _errorText;
+  String? _errorTextUserName;
   String _carrierValue = "Touch";
 
   _SigninPage();
@@ -28,6 +31,15 @@ class _SigninPage extends State<SigninPage> {
               child: ElevatedButton(
                 onPressed: () async {
                   String phoneNumber = _controllerPhoneNumber.text.trim();
+                  String username = _controllerUsername.text.trim();
+
+                  if (username.isEmpty) {
+                    setState(() {
+                      _errorTextUserName = "Please enter your username.";
+                    });
+                    return;
+                  }
+
                   if (phoneNumber.isEmpty) {
                     setState(() {
                       _errorText = "Please enter your phone number.";
@@ -44,14 +56,18 @@ class _SigninPage extends State<SigninPage> {
 
                   HelperSharedPreferences.setString("phone_number", phoneNumber)
                       .then((value) {
-                    HelperSharedPreferences.setString("carrier", _carrierValue)
+                    HelperSharedPreferences.setString("name", username)
                         .then((value) {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(builder: (BuildContext context) {
-                        return ScreenNavigator(
-                          callbackForWaitToRestart: () {},
-                        );
-                      }));
+                      HelperSharedPreferences.setString(
+                              "carrier", _carrierValue)
+                          .then((value) {
+                        Navigator.of(context).push(
+                            MaterialPageRoute(builder: (BuildContext context) {
+                          return ScreenNavigator(
+                            callbackForWaitToRestart: () {},
+                          );
+                        }));
+                      });
                     });
                   });
                 },
@@ -73,7 +89,7 @@ class _SigninPage extends State<SigninPage> {
             child: Column(
           children: [
             Padding(
-                padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
+                padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
                 child: Image(
                     image: const AssetImage('images/img_signin.png'),
                     width: MediaQuery.of(context).size.width * 0.7,
@@ -84,7 +100,34 @@ class _SigninPage extends State<SigninPage> {
               textAlign: TextAlign.center,
             ),
             Padding(
-                padding: const EdgeInsets.fromLTRB(20, 80, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 80, 20, 0),
+              child: TextFormField(
+                onChanged: (value) {
+                  setState(() {
+                    _errorTextUserName = null;
+                  });
+                },
+                controller: _controllerUsername,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(13)
+                ],
+                decoration: InputDecoration(
+                    enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                            width: 1,
+                            color: Colors.grey,
+                            style: BorderStyle.solid),
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    labelText: 'Enter your username',
+                    helperText: "Your name and family name",
+                    errorText: _errorTextUserName,
+                    helperStyle: const TextStyle(color: Colors.black),
+                    labelStyle:
+                        const TextStyle(color: Colors.grey, fontSize: 13)),
+              ),
+            ),
+            Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: TextFormField(
                   onChanged: (value) {
                     setState(() {
@@ -93,6 +136,9 @@ class _SigninPage extends State<SigninPage> {
                   },
                   keyboardType: TextInputType.phone,
                   controller: _controllerPhoneNumber,
+                  inputFormatters: [
+                  LengthLimitingTextInputFormatter(8)
+                ],
                   decoration: InputDecoration(
                       enabledBorder: const OutlineInputBorder(
                           borderSide: BorderSide(
@@ -103,7 +149,7 @@ class _SigninPage extends State<SigninPage> {
                       labelText: 'Enter your phone number',
                       helperText: "ex 81909560",
                       errorText: _errorText,
-                      helperStyle: const TextStyle(color: Colors.grey),
+                      helperStyle: const TextStyle(color: Colors.black),
                       labelStyle:
                           const TextStyle(color: Colors.grey, fontSize: 13)),
                 )),
@@ -131,6 +177,7 @@ class _SigninPage extends State<SigninPage> {
   @override
   void dispose() {
     _controllerPhoneNumber.dispose();
+    _controllerUsername.dispose();
     super.dispose();
   }
 }

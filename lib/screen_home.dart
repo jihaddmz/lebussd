@@ -434,11 +434,15 @@ class _ScreenHome extends State<ScreenHome> {
                       "Are you sure you want to sign out?", () {
                     HelperSharedPreferences.setString("phone_number", "")
                         .then((value) {
-                      Navigator.pop(context);
+                      HelperSharedPreferences.setString("name", "")
+                          .then((value) {
+                            Navigator.pop(context);
                       Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
                               builder: (context) => ScreenWelcome()),
                           (route) => false);
+                          });
+                      
                     });
                   }, () {
                     Navigator.pop(context);
