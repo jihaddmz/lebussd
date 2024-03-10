@@ -37,6 +37,7 @@ class _ScreenNavigator extends State<ScreenNavigator> {
                 currentIndex: _selectedIndex,
               )
             : null,
+        extendBody: true,
         body: _selectedIndex == 0
             ? ScreenHome(
                 callbackForWaitToRestart: widget.callbackForWaitToRestart)
