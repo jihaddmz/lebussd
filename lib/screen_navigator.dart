@@ -44,7 +44,13 @@ class _ScreenNavigator extends State<ScreenNavigator> {
             : _selectedIndex == 1
                 ? ScreenPurchaseHistory()
                 : _selectedIndex == 2
-                    ? ScreenLeaderboard()
+                    ? ScreenLeaderboard(
+                        onNetworkAccess: () {
+                          setState(() {
+                            _selectedIndex = 0;
+                          });
+                        },
+                      )
                     : ScreenContactUs());
   }
 }

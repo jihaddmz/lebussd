@@ -109,9 +109,11 @@ class _ScreenHome extends State<ScreenHome> {
 
   fetchServerChargesHistory() async {
     await SqliteActions().getAllServerChargeHistory().then((value) {
-      setState(() {
-        _listOfServerChargeHistory = value;
-      });
+      if (mounted) {
+        setState(() {
+          _listOfServerChargeHistory = value;
+        });
+      }
     });
   }
 
@@ -119,9 +121,11 @@ class _ScreenHome extends State<ScreenHome> {
     await Future.delayed(const Duration(minutes: 20), () {
       if (_listOfServerChargeHistory.length > 10) {
         SqliteActions().deleteLast10ServerChargeHistory();
-        setState(() {
-          _listOfServerChargeHistory.reversed.toList().removeRange(0, 10);
-        });
+        if (mounted) {
+          setState(() {
+            _listOfServerChargeHistory.reversed.toList().removeRange(0, 10);
+          });
+        }
       }
     });
 
@@ -132,9 +136,12 @@ class _ScreenHome extends State<ScreenHome> {
 
   pickRandomHeaderText() async {
     await Future.delayed(const Duration(seconds: 5), () {
-      setState(() {
-        _textHeader = Singleton().listOfHeaderInformation[counter];
-      });
+      if (mounted) {
+        setState(() {
+          _textHeader = Singleton().listOfHeaderInformation[counter];
+        });
+      }
+
       counter++;
       if (counter == Singleton().listOfHeaderInformation.length) {
         counter = 0;
@@ -371,22 +378,24 @@ class _ScreenHome extends State<ScreenHome> {
         isTouch: isTouch,
         onOfferingsGetComplete: (offering) {
           listOfPackages = offering.availablePackages;
-          setState(() {
-            _listOfBundle = [
-              ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                  0.5, "0xffFFCC00", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                  "0xffFF3B30", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                  1.5, "0xffFF9500", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                  "0xff4CD964", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                  2.5, "0xff5AC8FA", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                  "0xff5856D6", isTouch ? 1 : 0),
-            ];
-          });
+          if (mounted) {
+            setState(() {
+              _listOfBundle = [
+                ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
+                    0.5, "0xffFFCC00", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price,
+                    1, "0xffFF3B30", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
+                    1.5, "0xffFF9500", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price,
+                    2, "0xff4CD964", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
+                    2.5, "0xff5AC8FA", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price,
+                    3, "0xff5856D6", isTouch ? 1 : 0),
+              ];
+            });
+          }
         });
   }
 

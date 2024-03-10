@@ -3,12 +3,14 @@ import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/singleton.dart';
 
 class HelperFirebase {
-  static Future<void> createUserEntry(String phoneNumber, String username,
+  static Future<void> createUserEntry(
+      String phoneNumber, String username, String carrier,
       {String numberOfCredits = "0"}) async {
     Map<String, dynamic> map = {};
     map["username"] = username;
     map["numberOfCredits"] = numberOfCredits;
     map["isSignedIn"] = true;
+    map["carrier"] = carrier;
     await Singleton()
         .db
         .collection("users")
@@ -73,5 +75,15 @@ class HelperFirebase {
     });
 
     return numberOfCredits;
+  }
+
+  static Future<void> fetchAllUsers(
+      Function(DocumentSnapshot<Map<String, dynamic>>)
+          onDocumentFetched) async {
+    await Singleton().db.collection("users").get().then((value) {
+      for (var element in value.docs) {
+        onDocumentFetched(element);
+      }
+    });
   }
 }

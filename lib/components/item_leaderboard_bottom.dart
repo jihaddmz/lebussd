@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/models/model_leaderboard.dart';
 
 Widget ItemLeaderboardBottom(ModelLeaderboard modelLeaderboard, int index) {
+  bool isThisItemForThisUser = modelLeaderboard.phoneNumber ==
+                    HelperSharedPreferences.getString("phone_number");
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -17,7 +20,9 @@ Widget ItemLeaderboardBottom(ModelLeaderboard modelLeaderboard, int index) {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 10),
-            child: Text(modelLeaderboard.name),
+            child: Text(isThisItemForThisUser
+                ? "You"
+                : modelLeaderboard.name, style: TextStyle(color: isThisItemForThisUser ? Colors.red : Colors.black),),
           )
         ],
       ),

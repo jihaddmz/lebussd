@@ -3,9 +3,15 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_leaderboard_bottom.dart';
 import 'package:lebussd/components/item_leaderboard_top.dart';
 import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/helper_firebase.dart';
+import 'package:lebussd/helpers.dart';
 import 'package:lebussd/models/model_leaderboard.dart';
 
 class ScreenLeaderboard extends StatefulWidget {
+  ScreenLeaderboard({required this.onNetworkAccess});
+
+  final Function() onNetworkAccess;
+
   @override
   _ScreenLeaderboard createState() => _ScreenLeaderboard();
 }
@@ -17,43 +23,39 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
   void initState() {
     super.initState();
 
-    _list = [
-      ModelLeaderboard(
-          name: "Jihad Mahfouz",
-          phoneNumber: "81909560",
-          numberOfCredits: "12012"),
-      ModelLeaderboard(
-          name: "Ghandi Ghanem",
-          phoneNumber: "78459230",
-          numberOfCredits: "98"),
-      ModelLeaderboard(
-          name: "Nomair Raya", phoneNumber: "78459230", numberOfCredits: "987"),
-      ModelLeaderboard(
-          name: "Goerge Maalouf",
-          phoneNumber: "78459230",
-          numberOfCredits: "111"),
-      ModelLeaderboard(
-          name: "Abbas Kassem Zein",
-          phoneNumber: "78459230",
-          numberOfCredits: "110"),
-      ModelLeaderboard(
-          name: "Georgio Nawfal",
-          phoneNumber: "78459230",
-          numberOfCredits: "500"),
-      ModelLeaderboard(
-          name: "Roy AboGharib",
-          phoneNumber: "78459230",
-          numberOfCredits: "50"),
-      ModelLeaderboard(
-          name: "Maher", phoneNumber: "78459230", numberOfCredits: "20"),
-      ModelLeaderboard(
-          name: "Sarjoun", phoneNumber: "78459230", numberOfCredits: "200")
-    ];
+    fetchAllUsers();
+  }
 
-    _list.sort((p, n) {
-      return int.parse(n.numberOfCredits)
-          .compareTo(int.parse(p.numberOfCredits));
-    });
+  Future<void> fetchAllUsers() async {
+    if (await Helpers.isConnected()) {
+      HelperDialog().showLoaderDialog(context);
+      List<ModelLeaderboard> result = [];
+      await HelperFirebase.fetchAllUsers((documentSnapshot) {
+        result.add(ModelLeaderboard(
+            name: documentSnapshot["username"],
+            phoneNumber: documentSnapshot.id,
+            numberOfCredits: documentSnapshot["numberOfCredits"]));
+      });
+
+      setState(() {
+        _list = result;
+      });
+
+      Navigator.pop(context);
+
+      _list.sort((p, n) {
+        return int.parse(n.numberOfCredits)
+            .compareTo(int.parse(p.numberOfCredits));
+      });
+    } else {
+      HelperDialog().showDialogNotConnected(context);
+
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pop(context);
+
+        widget.onNetworkAccess();
+      });
+    }
   }
 
   @override
@@ -69,8 +71,8 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
           IconButton(
               onPressed: () {
                 HelperDialog().showDialogInfo(
-                    "Note",
-                    "The First will get 5 credits\nThe Second will get 3 credits\nThe Third will get 2 credits",
+                    "Info",
+                    "- The First will get 5 credits\n- The Second will get 3 credits\n- The Third will get 2 credits\n\nEach will receive their bonuses monthly on the 1st of the second month.",
                     context,
                     true, () {
                   Navigator.pop(context);
@@ -86,23 +88,27 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
             widthFactor: 1,
             child: Padding(
               padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-              child: Stack(
-                children: [
-                  Positioned(
-                    bottom: 0,
-                    left: -5,
-                    child: ItemLeaderboardTop(_list[1], 2, context),
-                  ),
-                  Positioned(
-                      bottom: 0,
-                      left: MediaQuery.of(context).size.width * 0.68,
-                      child: ItemLeaderboardTop(_list[2], 3, context)),
-                  Positioned(
-                      bottom: 0,
-                      left: MediaQuery.of(context).size.width * 0.3,
-                      child: ItemLeaderboardTop(_list[0], 1, context)),
-                ],
-              ),
+              child: Visibility(
+                  visible: _list.length >= 3,
+                  child: Stack(children: listOfLeaderboardsTop()
+                      // Positioned(
+                      //   bottom: 0,
+                      //   left: -5,
+                      //   child:
+                      //       ItemLeaderboardTop(_list.elementAt(1), 2, context),
+                      // ),
+                      // Positioned(
+                      //     bottom: 0,
+                      //     left: MediaQuery.of(context).size.width * 0.68,
+                      //     child: ItemLeaderboardTop(
+                      //         _list.elementAt(2), 3, context)),
+                      // Positioned(
+                      //     bottom: 0,
+                      //     left: MediaQuery.of(context).size.width * 0.3,
+                      //     child: ItemLeaderboardTop(
+                      //         _list.elementAt(0), 1, context)),
+
+                      )),
             ),
           ),
           Align(
@@ -128,6 +134,46 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
         ],
       ),
     );
+  }
+
+  List<Widget> listOfLeaderboardsTop() {
+    List<Widget> result = [];
+
+    Widget? first;
+
+    for (var i = 0; i < _list.length; i++) {
+      if (i > 2) {
+        break;
+      }
+      if (i == 0) {
+        // because we want to add the first standing at the end to become infront the others
+        first = Positioned(
+          bottom: 0,
+          left: i + 1 == 2
+              ? -5
+              : i + 1 == 3
+                  ? MediaQuery.of(context).size.width * 0.68
+                  : MediaQuery.of(context).size.width * 0.3,
+          child: ItemLeaderboardTop(_list.elementAt(i), i + 1, context),
+        );
+        continue;
+      }
+
+      result.add(Positioned(
+        bottom: 0,
+        left: i + 1 == 2
+            ? -5
+            : i + 1 == 3
+                ? MediaQuery.of(context).size.width * 0.68
+                : MediaQuery.of(context).size.width * 0.3,
+        child: ItemLeaderboardTop(_list.elementAt(i), i + 1, context),
+      ));
+    }
+    if (first != null) {
+      result.add(first);
+    }
+
+    return result;
   }
 
   List<Widget> listOfLeaderboards() {

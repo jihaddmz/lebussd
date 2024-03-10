@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/models/model_leaderboard.dart';
 
 Widget ItemLeaderboardTop(
     ModelLeaderboard modelLeaderboard, int position, BuildContext context) {
+      bool isThisItemForThisUser = modelLeaderboard.phoneNumber ==
+                    HelperSharedPreferences.getString("phone_number");
   double containerHeight = 0;
-  double containerwidth = 0;
-  double containerwidthPerc = 0;
   double positionTextSize = 0;
   double nameTextSize = 0;
   double avatarTextSize = 0;
@@ -14,32 +15,26 @@ Widget ItemLeaderboardTop(
 
   if (position == 1) {
     containerHeight = 150;
-    containerwidth = 130;
     positionTextSize = 60;
     nameTextSize = 25;
     avatarTextSize = 30;
     avatarRadius = 30;
-    containerwidthPerc = 0.4;
     avatarColor = const Color(0xffFF3B30);
   } else if (position == 2) {
     containerHeight = 100;
-    containerwidth = 130;
     positionTextSize = 60;
     positionTextSize = 45;
     avatarColor = const Color(0xffFF9500);
     nameTextSize = 20;
     avatarTextSize = 25;
     avatarRadius = 25;
-    containerwidthPerc = 0.3;
   } else {
     containerHeight = 80;
-    containerwidth = 130;
     positionTextSize = 30;
     avatarColor = const Color(0xff4CD964);
     nameTextSize = 15;
     avatarTextSize = 20;
     avatarRadius = 20;
-    containerwidthPerc = 0.3;
   }
 
   return Column(
@@ -55,8 +50,8 @@ Widget ItemLeaderboardTop(
       Padding(
         padding: const EdgeInsets.only(top: 10),
         child: Text(
-          modelLeaderboard.name,
-          style: TextStyle(fontSize: nameTextSize),
+          isThisItemForThisUser ? "You" : modelLeaderboard.name,
+          style: TextStyle(fontSize: nameTextSize, color: isThisItemForThisUser ? Colors.red : Colors.black),
         ),
       ),
       Padding(

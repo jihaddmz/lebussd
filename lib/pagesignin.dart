@@ -87,7 +87,7 @@ class _SigninPage extends State<SigninPage> {
 
                     if (!isSignedInTrue) {
                       await HelperFirebase.createUserEntry(
-                          phoneNumber, username,
+                          phoneNumber, username, _carrierValue,
                           numberOfCredits: numberOfCredits);
                       HelperSharedPreferences.setString(
                               "phone_number", phoneNumber)
