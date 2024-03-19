@@ -52,12 +52,16 @@ class _ScreenHome extends State<ScreenHome> {
   String? _errorText;
   String _textHeader = '';
   List<ModelServerChargeHistory> _listOfServerChargeHistory = [];
+  String _username = "";
+  String _phoneNumber = "";
 
   @override
   void initState() {
     super.initState();
     setState(() {
       _carrier = HelperSharedPreferences.getString("carrier");
+      _username = HelperSharedPreferences.getString("name");
+      _phoneNumber = HelperSharedPreferences.getString("phone_number");
     });
 
     if (!Helpers.isClientPhone()) {
@@ -415,6 +419,46 @@ class _ScreenHome extends State<ScreenHome> {
           title: Text(Singleton().appName,
               style: Theme.of(context).textTheme.displayLarge),
           actions: [
+            IconButton(
+                onPressed: () {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 40,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                  ),
+                                ),
+                                Text("Profile")
+                              ],
+                            ),
+                          ),
+                          content: Center(
+                            heightFactor: 1,
+                            child: Text(
+                              "Username: $_username\nPhone Number: $_phoneNumber",
+                            ),
+                          ),
+                          actionsAlignment: MainAxisAlignment.center,
+                          actions: [
+                            ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("OK",
+                                    style: TextStyle(fontSize: 15)))
+                          ],
+                        );
+                      });
+                },
+                icon: const Icon(Icons.person_outline_outlined)),
             IconButton(
                 onPressed: () async {
                   if (Platform.isAndroid) {
