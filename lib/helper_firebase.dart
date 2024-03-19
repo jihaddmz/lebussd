@@ -115,4 +115,29 @@ class HelperFirebase {
         .doc(HelperSharedPreferences.getString("phone_number"))
         .set(map, SetOptions(merge: true));
   }
+
+  static Future<bool> fetchIsCongratsTrue() async {
+    bool result = false;
+
+    await Singleton()
+        .db
+        .collection("users")
+        .doc(HelperSharedPreferences.getString("phone_number"))
+        .get()
+        .then((value) {
+      result = value["congrats"];
+    }).onError((error, stackTrace) {});
+
+    return result;
+  }
+
+  static Future<void> updateIsCongrats(bool value) async {
+    Map<String, dynamic> map = {};
+    map["congrats"] = value;
+    await Singleton()
+        .db
+        .collection("users")
+        .doc(HelperSharedPreferences.getString("phone_number"))
+        .set(map, SetOptions(merge: true));
+  }
 }

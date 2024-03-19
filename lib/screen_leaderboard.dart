@@ -6,6 +6,7 @@ import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/helper_firebase.dart';
 import 'package:lebussd/helpers.dart';
 import 'package:lebussd/models/model_leaderboard.dart';
+import 'package:lottie/lottie.dart';
 
 class ScreenLeaderboard extends StatefulWidget {
   ScreenLeaderboard({required this.onNetworkAccess});
@@ -16,18 +17,40 @@ class ScreenLeaderboard extends StatefulWidget {
   _ScreenLeaderboard createState() => _ScreenLeaderboard();
 }
 
-class _ScreenLeaderboard extends State<ScreenLeaderboard> {
+class _ScreenLeaderboard extends State<ScreenLeaderboard>
+    with SingleTickerProviderStateMixin {
   List<ModelLeaderboard> _list = [];
   late final String firstReward;
   late final String secondReward;
   late final String thirdReward;
+  late AnimationController controller;
+  bool _showAnimations = false;
 
   @override
   void initState() {
     super.initState();
+    controller = AnimationController(vsync: this);
 
+    Future.delayed(const Duration(milliseconds: 500), () {fetchIfIsCongratsTrue();});
+    
     fetchAllUsers();
     fetchNumberOfRewardsStored();
+  }
+
+  Future<void> fetchIfIsCongratsTrue() async {
+    HelperFirebase.fetchIsCongratsTrue().then((value) {
+      if (value) {
+        setState(() {
+          _showAnimations = true;
+        });
+        controller.repeat(period: const Duration(seconds: 2));
+
+        Future.delayed(const Duration(seconds: 5), () {
+          HelperFirebase.updateIsCongrats(false);
+          controller.reset();
+        });
+      }
+    });
   }
 
   Future<void> fetchNumberOfRewardsStored() async {
@@ -125,7 +148,32 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard> {
                 ),
               ),
             ),
-          )
+          ),
+          Visibility(
+              visible: _showAnimations,
+              child: Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Lottie.asset(
+                    controller: controller,
+                    "assets/congratulations.json",
+                    animate: true,
+                    repeat: false),
+              )),
+          Visibility(
+              visible: _showAnimations,
+              child: Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Lottie.asset(
+                      controller: controller,
+                      "assets/congrats.json",
+                      animate: true,
+                      repeat: false))),
         ],
       ),
     );
