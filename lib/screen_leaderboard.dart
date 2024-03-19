@@ -31,8 +31,10 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard>
     super.initState();
     controller = AnimationController(vsync: this);
 
-    Future.delayed(const Duration(milliseconds: 500), () {fetchIfIsCongratsTrue();});
-    
+    Future.delayed(const Duration(milliseconds: 500), () {
+      fetchIfIsCongratsTrue();
+    });
+
     fetchAllUsers();
     fetchNumberOfRewardsStored();
   }
@@ -123,7 +125,7 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard>
       body: Stack(
         children: [
           FractionallySizedBox(
-            heightFactor: 0.45,
+            heightFactor: 0.5,
             widthFactor: 1,
             child: Visibility(
                 visible: _list.length >= 3,
@@ -132,7 +134,7 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard>
           Align(
             alignment: Alignment.bottomCenter,
             child: FractionallySizedBox(
-              heightFactor: 0.6,
+              heightFactor: 0.55,
               widthFactor: 1.02,
               child: Card(
                 shape: const RoundedRectangleBorder(

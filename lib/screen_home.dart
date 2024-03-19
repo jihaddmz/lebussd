@@ -436,7 +436,7 @@ class _ScreenHome extends State<ScreenHome> {
                                     size: 40,
                                   ),
                                 ),
-                                Text("Profile")
+                                Text("Profile", style: TextStyle(fontWeight: FontWeight.bold),)
                               ],
                             ),
                           ),

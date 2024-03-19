@@ -31,7 +31,7 @@ class _SigninPage extends State<SigninPage> {
         floatingActionButton: Visibility(
           visible: MediaQuery.of(context).viewInsets.bottom == 0.0,
           child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(bottom: 0),
               child: ElevatedButton(
                 onPressed: () async {
                   String phoneNumber = _controllerPhoneNumber.text.trim();
@@ -161,7 +161,7 @@ class _SigninPage extends State<SigninPage> {
               textAlign: TextAlign.center,
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 80, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 0),
               child: TextFormField(
                 onChanged: (value) {
                   setState(() {
