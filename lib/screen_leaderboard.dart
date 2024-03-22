@@ -85,8 +85,8 @@ class _ScreenLeaderboard extends State<ScreenLeaderboard>
       Navigator.pop(context);
 
       _list.sort((p, n) {
-        return int.parse(n.numberOfCredits)
-            .compareTo(int.parse(p.numberOfCredits));
+        return double.parse(n.numberOfCredits)
+            .compareTo(double.parse(p.numberOfCredits));
       });
     } else {
       HelperDialog().showDialogNotConnected(context);
