@@ -14,10 +14,9 @@ import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/helper_dialog.dart';
+import 'package:lebussd/helper_firebase.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
-import 'package:lebussd/screen_contactus.dart';
-import 'package:lebussd/screen_purchasehistory.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
@@ -44,7 +43,6 @@ class _ScreenHome extends State<ScreenHome> {
   String _carrier = "Touch";
   String _error =
       ""; // error happened on the server phone during charging for the client
-  final int _selectedIndex = 0;
   bool _isChargingForOther = false;
   final TextEditingController _controllerOtherPhoneNumber =
       TextEditingController();
@@ -54,15 +52,19 @@ class _ScreenHome extends State<ScreenHome> {
   String? _errorText;
   String _textHeader = '';
   List<ModelServerChargeHistory> _listOfServerChargeHistory = [];
+  String _username = "";
+  String _phoneNumber = "";
 
   @override
   void initState() {
     super.initState();
     setState(() {
       _carrier = HelperSharedPreferences.getString("carrier");
+      _username = HelperSharedPreferences.getString("name");
+      _phoneNumber = HelperSharedPreferences.getString("phone_number");
     });
 
-    if (!isClientPhone()) {
+    if (!Helpers.isClientPhone()) {
       // it is the server phone number
       requestServerPhonePermissions();
       // checkUSSD();
@@ -111,9 +113,11 @@ class _ScreenHome extends State<ScreenHome> {
 
   fetchServerChargesHistory() async {
     await SqliteActions().getAllServerChargeHistory().then((value) {
-      setState(() {
-        _listOfServerChargeHistory = value;
-      });
+      if (mounted) {
+        setState(() {
+          _listOfServerChargeHistory = value;
+        });
+      }
     });
   }
 
@@ -121,9 +125,11 @@ class _ScreenHome extends State<ScreenHome> {
     await Future.delayed(const Duration(minutes: 20), () {
       if (_listOfServerChargeHistory.length > 10) {
         SqliteActions().deleteLast10ServerChargeHistory();
-        setState(() {
-          _listOfServerChargeHistory.reversed.toList().removeRange(0, 10);
-        });
+        if (mounted) {
+          setState(() {
+            _listOfServerChargeHistory.reversed.toList().removeRange(0, 10);
+          });
+        }
       }
     });
 
@@ -134,9 +140,12 @@ class _ScreenHome extends State<ScreenHome> {
 
   pickRandomHeaderText() async {
     await Future.delayed(const Duration(seconds: 5), () {
-      setState(() {
-        _textHeader = Singleton().listOfHeaderInformation[counter];
-      });
+      if (mounted) {
+        setState(() {
+          _textHeader = Singleton().listOfHeaderInformation[counter];
+        });
+      }
+
       counter++;
       if (counter == Singleton().listOfHeaderInformation.length) {
         counter = 0;
@@ -199,7 +208,7 @@ class _ScreenHome extends State<ScreenHome> {
       if (ussdResponseMessage != null) {
         if (onResponseResult != null) onResponseResult(ussdResponseMessage);
         String onDeviceUSSD;
-        if (!isClientPhone()) {
+        if (!Helpers.isClientPhone()) {
           if (_carrier == "Alfa") {
             onDeviceUSSD = ussdResponseMessage
                 .split(" ")[0]
@@ -250,7 +259,7 @@ class _ScreenHome extends State<ScreenHome> {
   /// send ussd charge for the user
   ///
   Future<void> listen() async {
-    await Future.delayed(const Duration(seconds: 1), () async {
+    await Future.delayed(const Duration(seconds: 8), () async {
       final collRef = Singleton()
           .db
           .collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
@@ -343,19 +352,6 @@ class _ScreenHome extends State<ScreenHome> {
     });
   }
 
-  ///
-  /// method to check if this device is a client or the server phone
-  ///
-  bool isClientPhone() {
-    for (var number in Singleton().listOfServerPhoneNumbers) {
-      if (HelperSharedPreferences.getString("phone_number") == number) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   List<Widget> itemsOfServerChargeHistory() {
     List<Widget> listOfServerChargeHistory = [];
     for (var item in _listOfServerChargeHistory) {
@@ -386,28 +382,30 @@ class _ScreenHome extends State<ScreenHome> {
         isTouch: isTouch,
         onOfferingsGetComplete: (offering) {
           listOfPackages = offering.availablePackages;
-          setState(() {
-            _listOfBundle = [
-              ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
-                  0.5, "0xffFFCC00", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price, 1,
-                  "0xffFF3B30", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
-                  1.5, "0xffFF9500", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price, 2,
-                  "0xff4CD964", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
-                  2.5, "0xff5AC8FA", isTouch ? 1 : 0),
-              ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price, 3,
-                  "0xff5856D6", isTouch ? 1 : 0),
-            ];
-          });
+          if (mounted) {
+            setState(() {
+              _listOfBundle = [
+                ModelBundle(offering.getPackage("ussd_0.5")!.storeProduct.price,
+                    0.5, "0xffFFCC00", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_1")!.storeProduct.price,
+                    1, "0xffFF3B30", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_1.5")!.storeProduct.price,
+                    1.5, "0xffFF9500", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_2")!.storeProduct.price,
+                    2, "0xff4CD964", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_2.5")!.storeProduct.price,
+                    2.5, "0xff5AC8FA", isTouch ? 1 : 0),
+                ModelBundle(offering.getPackage("ussd_3")!.storeProduct.price,
+                    3, "0xff5856D6", isTouch ? 1 : 0),
+              ];
+            });
+          }
         });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isClientPhone()) {
+    if (Helpers.isClientPhone()) {
       fetchBundlesFromRevenueCat();
     } else {
       Future.delayed(const Duration(seconds: 5), () {
@@ -416,33 +414,51 @@ class _ScreenHome extends State<ScreenHome> {
     }
 
     return Scaffold(
-        bottomNavigationBar: isClientPhone()
-            ? BottomNavigationBar(
-                onTap: (index) {
-                  setState(() {
-                    if (_selectedIndex != index) {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(builder: (BuildContext context) {
-                        if (index == 1) {
-                          return ScreenPurchaseHistory();
-                        } else {
-                          return ScreenContactUs();
-                        }
-                      }));
-                    }
-                  });
-                },
-                selectedItemColor: primaryColor,
-                unselectedItemColor: Colors.black,
-                items: Singleton().listOfBottomNavItems,
-                currentIndex: _selectedIndex,
-              )
-            : null,
         appBar: AppBar(
           leading: const Image(image: AssetImage("images/logo.png")),
           title: Text(Singleton().appName,
               style: Theme.of(context).textTheme.displayLarge),
           actions: [
+            IconButton(
+                onPressed: () {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 40,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                  ),
+                                ),
+                                Text("Profile", style: TextStyle(fontWeight: FontWeight.bold),)
+                              ],
+                            ),
+                          ),
+                          content: Center(
+                            heightFactor: 1,
+                            child: Text(
+                              "Username: $_username\nPhone Number: $_phoneNumber",
+                            ),
+                          ),
+                          actionsAlignment: MainAxisAlignment.center,
+                          actions: [
+                            ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("OK",
+                                    style: TextStyle(fontSize: 15)))
+                          ],
+                        );
+                      });
+                },
+                icon: const Icon(Icons.person_outline_outlined)),
             IconButton(
                 onPressed: () async {
                   if (Platform.isAndroid) {
@@ -469,15 +485,25 @@ class _ScreenHome extends State<ScreenHome> {
             IconButton(
                 onPressed: () {
                   HelperDialog().showDialogAffirmation(context, "Attention!",
-                      "Are you sure you want to sign out?", () {
-                    HelperSharedPreferences.setString("phone_number", "")
-                        .then((value) {
-                      Navigator.pop(context);
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (context) => ScreenWelcome()),
-                          (route) => false);
-                    });
+                      "Are you sure you want to sign out?", () async {
+                    Navigator.pop(context);
+                    if (await Helpers.isConnected()) {
+                      HelperDialog().showLoaderDialog(context);
+                      await HelperFirebase.updateIsSignedOut();
+                      HelperSharedPreferences.setString("phone_number", "")
+                          .then((value) {
+                        HelperSharedPreferences.setString("name", "")
+                            .then((value) {
+                          Navigator.pop(context);
+                          Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => ScreenWelcome()),
+                              (route) => false);
+                        });
+                      });
+                    } else {
+                      HelperDialog().showDialogNotConnected(context);
+                    }
                   }, () {
                     Navigator.pop(context);
                   });
@@ -492,41 +518,44 @@ class _ScreenHome extends State<ScreenHome> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Visibility(
-                      visible: !isClientPhone(),
+                      visible: !Helpers.isClientPhone(),
                       child: Column(
                         children: itemsOfServerChargeHistory(),
                       )),
                   // Load a Lottie file from your assets
                   Visibility(
-                      visible: _listOfBundle.isEmpty && isClientPhone(),
+                      visible: _listOfBundle.isEmpty && Helpers.isClientPhone(),
                       child:
                           Lottie.asset('assets/loading.json', animate: true)),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Visibility(
-                          visible: isClientPhone(),
-                          child: Card(
-                              child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 30),
-                            child: Container(
-                              alignment: Alignment.center,
-                              child: AnimatedTextKit(
-                                animatedTexts: [
-                                  TyperAnimatedText(
-                                    _textHeader,
-                                    textAlign: TextAlign.center,
-                                    textStyle: GoogleFonts.croissantOne(),
-                                  )
-                                ],
-                                totalRepeatCount: 500,
-                                pause: const Duration(seconds: 5),
+                          visible: Helpers.isClientPhone(),
+                          child: SizedBox(
+                            height: 100,
+                            child: Card(
+                                child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 10),
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: AnimatedTextKit(
+                                  animatedTexts: [
+                                    TyperAnimatedText(
+                                      _textHeader,
+                                      textAlign: TextAlign.center,
+                                      textStyle: GoogleFonts.croissantOne(),
+                                    )
+                                  ],
+                                  totalRepeatCount: 500,
+                                  pause: const Duration(seconds: 5),
+                                ),
                               ),
-                            ),
-                          ))),
+                            )),
+                          )),
                       Visibility(
-                          visible: !isClientPhone(),
+                          visible: !Helpers.isClientPhone(),
                           child: SizedBox(
                               height: MediaQuery.of(context).size.height,
                               child: Center(
@@ -536,7 +565,7 @@ class _ScreenHome extends State<ScreenHome> {
                                 style: Theme.of(context).textTheme.displayLarge,
                               )))),
                       Visibility(
-                          visible: isClientPhone(),
+                          visible: Helpers.isClientPhone(),
                           child: Column(
                             children: [
                               Row(
@@ -687,7 +716,7 @@ class _ScreenHome extends State<ScreenHome> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Visibility(
-                                      visible: isClientPhone(),
+                                      visible: Helpers.isClientPhone(),
                                       child: Padding(
                                         padding: const EdgeInsets.only(top: 50),
                                         child: Text(
@@ -707,7 +736,7 @@ class _ScreenHome extends State<ScreenHome> {
                                 ],
                               ),
                               Visibility(
-                                  visible: isClientPhone(),
+                                  visible: Helpers.isClientPhone(),
                                   child: Padding(
                                       padding: const EdgeInsets.only(top: 20),
                                       child: Visibility(
@@ -751,22 +780,23 @@ class _ScreenHome extends State<ScreenHome> {
         : HelperSharedPreferences.getString("phone_number");
 
     try {
-      Purchases.purchasePackage(package).then((value) {
-        HelperDialog().showLoaderDialog(context);
+      Purchases.purchasePackage(package).then((value) async {
         // payment is successful
+        HelperDialog().showLoaderDialog(context);
         DateTime now = DateTime.now();
         String chargingDate =
             "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
-        SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
-            id: 0,
-            bundle: modelBundle.bundle,
-            price: modelBundle.price,
-            date: chargingDate,
-            color: modelBundle.color,
-            phoneNumber: phoneNumber,
-            isTouch: modelBundle.isTouch));
         sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber),
-            () {
+            () async {
+          await HelperFirebase.updateUserNumberOfCredits(modelBundle.bundle);
+          await SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
+              id: 0,
+              bundle: modelBundle.bundle,
+              price: double.parse(modelBundle.price.toStringAsFixed(2)),
+              date: chargingDate,
+              color: modelBundle.color,
+              phoneNumber: phoneNumber,
+              isTouch: modelBundle.isTouch));
           if (context.mounted) {
             Navigator.pop(context);
             HelperDialog().showDialogInfo(

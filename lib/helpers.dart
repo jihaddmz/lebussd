@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:lebussd/HelperSharedPref.dart';
+import 'package:lebussd/singleton.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -7,6 +11,19 @@ import 'helper_dialog.dart';
 class Helpers {
   static void logD(String msg) {
     debugPrint('Jihad $msg');
+  }
+
+  ///
+  /// method to check if this device is a client or the server phone
+  ///
+  static bool isClientPhone() {
+    for (var number in Singleton().listOfServerPhoneNumbers) {
+      if (HelperSharedPreferences.getString("phone_number") == number) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   static requestOneSignalPermission() {
@@ -151,5 +168,14 @@ class Helpers {
       // You might want to guide the user to the app settings.
     }
     return false;
+  }
+
+  static Future<bool> isConnected() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
   }
 }

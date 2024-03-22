@@ -27,11 +27,12 @@ class Singleton {
   List<ModelBundle> listOfBundle = [];
   final List<String> listOfCarriers = const ["Touch", "Alfa"];
   List<BottomNavigationBarItem> listOfBottomNavItems = [
+    const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ""),
+    const BottomNavigationBarItem(icon: Icon(Icons.history), label: ""),
     const BottomNavigationBarItem(
-        icon: Icon(Icons.home_outlined), label: 'Home'),
-    const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+        icon: Icon(Icons.leaderboard_outlined), label: ""),
     const BottomNavigationBarItem(
-        icon: Icon(Icons.contact_support_outlined), label: 'Contact Us'),
+        icon: Icon(Icons.contact_support_outlined), label: ""),
   ];
   List<BottomNavigationBarItem> listOfBottomNavItemsSever = [
     const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

@@ -30,6 +30,7 @@ class _ScreenPurchaseHistory extends State<ScreenPurchaseHistory> {
     return Scaffold(
       appBar: AppBar(
         title: Text("History", style: Theme.of(context).textTheme.displayLarge),
+        leading: null,
         actions: [
           IconButton(
               onPressed: () {

@@ -10,11 +10,20 @@ class HelperDialog {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: title != null ? Text(title) : null,
+            title: title != null
+                ? Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  )
+                : null,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(content),
+                Text(
+                  content,
+                  textAlign: TextAlign.center,
+                ),
                 Visibility(
                     visible: note != "",
                     child: Padding(
@@ -43,6 +52,16 @@ class HelperDialog {
         });
   }
 
+  void showDialogNotConnected(BuildContext context) {
+    showDialogInfo(
+        "Warning!",
+        "You don't have network access! Pls connect and try again.",
+        context,
+        true, () {
+      Navigator.pop(context);
+    });
+  }
+
   void showLoaderDialog(BuildContext context) {
     showDialog(
         barrierDismissible: false,
@@ -66,8 +85,13 @@ class HelperDialog {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(title),
-            content: Text(content),
+            title: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Text(content, textAlign: TextAlign.center),
+            actionsAlignment: MainAxisAlignment.spaceEvenly,
             actions: [
               ElevatedButton(
                   onPressed: () {

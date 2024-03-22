@@ -19,7 +19,7 @@ Widget itemPurchaseHistory(ModelPurchaseHistory modelPurchaseHistory) {
           children: [
             Text(
                 "Bundle \$${modelPurchaseHistory
-                    .bundle}   Price \$${modelPurchaseHistory.price}"),
+                    .bundle}   Price \$${modelPurchaseHistory.price.toStringAsFixed(2)}"),
             Text("Phone Number ${modelPurchaseHistory.phoneNumber}"),
             Container(
               alignment: Alignment.bottomCenter,

@@ -8,7 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/helepr_purchases.dart';
-import 'package:lebussd/screen_home.dart';
+import 'package:lebussd/screen_navigator.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
@@ -19,10 +19,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'firebase_options.dart';
-import 'helpers.dart';
 
 bool isUserSignedIn() {
-  return HelperSharedPreferences.getString("phone_number").isNotEmpty;
+  return HelperSharedPreferences.getString("phone_number").isNotEmpty && HelperSharedPreferences.getString("name").isNotEmpty;
 }
 
 initializeOneSignal() {
@@ -146,40 +145,41 @@ class _MyApp extends State<MyApp> {
               }
             },
             child: MaterialApp(
-                title: 'LebUSSD',
-                theme: ThemeData(
-                  colorScheme: const ColorScheme(
-                      brightness: Brightness.dark,
-                      primary: Color.fromARGB(255, 37, 132, 241),
-                      onPrimary: Colors.white,
-                      secondary: Colors.grey,
-                      onSecondary: Color.fromARGB(100, 37, 132, 241),
-                      error: Color.fromARGB(160, 167, 7, 7),
-                      onError: Colors.white,
-                      background: Color.fromARGB(255, 255, 255, 255),
-                      onBackground: Colors.black,
-                      surface: Color.fromARGB(255, 255, 255, 255),
-                      onSurface: Colors.black),
-                  textTheme: const TextTheme(
-                    displayLarge:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                    displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
-                    displaySmall: TextStyle(fontSize: 14),
-                    labelLarge:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                    labelMedium:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  // fontFamily: 'Poppins',
-                  fontFamily: 'Brandmark1 Bold',
-                  useMaterial3: true,
+              title: 'LebUSSD',
+              theme: ThemeData(
+                colorScheme: const ColorScheme(
+                    brightness: Brightness.dark,
+                    primary: Color.fromARGB(255, 37, 132, 241),
+                    onPrimary: Colors.white,
+                    secondary: Colors.grey,
+                    onSecondary: Color.fromARGB(100, 37, 132, 241),
+                    error: Color.fromARGB(160, 167, 7, 7),
+                    onError: Colors.white,
+                    background: Color.fromARGB(255, 255, 255, 255),
+                    onBackground: Colors.black,
+                    surface: Color.fromARGB(255, 255, 255, 255),
+                    onSurface: Colors.black),
+                textTheme: const TextTheme(
+                  displayLarge:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                  displayMedium: TextStyle(fontSize: 18, color: Colors.grey),
+                  displaySmall: TextStyle(fontSize: 14),
+                  labelLarge:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                  labelMedium:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                home: isUserSignedIn()
-                    ? ScreenHome(
-                        callbackForWaitToRestart: () {
-                          waitToRestartApp();
-                        },
-                      )
-                    : ScreenWelcome())));
+                // fontFamily: 'Poppins',
+                fontFamily: 'Brandmark1 Bold',
+                useMaterial3: true,
+              ),
+              home: isUserSignedIn()
+                  ? ScreenNavigator(
+                      callbackForWaitToRestart: () {
+                        waitToRestartApp();
+                      },
+                    )
+                  : ScreenWelcome(),
+            )));
   }
 }
