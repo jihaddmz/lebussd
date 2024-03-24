@@ -436,7 +436,10 @@ class _ScreenHome extends State<ScreenHome> {
                                     size: 40,
                                   ),
                                 ),
-                                Text("Profile", style: TextStyle(fontWeight: FontWeight.bold),)
+                                Text(
+                                  "Profile",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                )
                               ],
                             ),
                           ),
@@ -789,6 +792,12 @@ class _ScreenHome extends State<ScreenHome> {
         sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber),
             () async {
           await HelperFirebase.updateUserNumberOfCredits(modelBundle.bundle);
+          await HelperSharedPreferences.setString(
+              "number_of_credits",
+              (double.parse(HelperSharedPreferences.getString(
+                          "number_of_credits")) +
+                      modelBundle.bundle)
+                  .toString());
           await SqliteActions().insertPurchaseHistory(ModelPurchaseHistory(
               id: 0,
               bundle: modelBundle.bundle,
