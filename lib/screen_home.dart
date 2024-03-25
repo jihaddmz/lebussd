@@ -13,10 +13,12 @@ import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
+import 'package:lebussd/components/text.dart';
 import 'package:lebussd/helper_dialog.dart';
 import 'package:lebussd/helper_firebase.dart';
 import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/models/model_purchase_history.dart';
+import 'package:lebussd/models/model_scheduled_credit.dart';
 import 'package:lebussd/screen_welcome.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:lebussd/sqlite_actions.dart';
@@ -54,6 +56,8 @@ class _ScreenHome extends State<ScreenHome> {
   List<ModelServerChargeHistory> _listOfServerChargeHistory = [];
   String _username = "";
   String _phoneNumber = "";
+  String _scheduledCharge = "now";
+  List<ModelScheduledCredit> listOfScheduleChargings = [];
 
   @override
   void initState() {
@@ -69,6 +73,8 @@ class _ScreenHome extends State<ScreenHome> {
       requestServerPhonePermissions();
       // checkUSSD();
       listen();
+      listenForScheduledCreditsCharging();
+      chargeScheduledCredits();
       removeLast10ServerChargeHistory();
       // waitToCheckBalance();
       widget.callbackForWaitToRestart();
@@ -255,14 +261,91 @@ class _ScreenHome extends State<ScreenHome> {
   }
 
   /// method for server phone
+  /// this method will listen for any added docs in the scheduled credits collection
+  /// and add them to the loca list
+  ///
+  Future<void> listenForScheduledCreditsCharging() async {
+    Singleton()
+        .db
+        .collection(_carrier == "Touch"
+            ? HelperFirebase.fields.collScheduledTouchCredits
+            : HelperFirebase.fields.collScheduledAlfaCredits)
+        .snapshots()
+        .listen((event) async {
+      for (var element in event.docChanges) {
+        if (element.type == DocumentChangeType.added) {
+          listOfScheduleChargings.add(ModelScheduledCredit(
+              0,
+              element.doc.reference,
+              double.parse(element.doc["bundle"]),
+              element.doc["phoneNumber"].toString(),
+              _carrier == "Touch" ? 1 : 0,
+              element.doc["date"]));
+        }
+      }
+    }).onError((e) {
+    });
+  }
+
+  /// method for server phone
+  /// this method will loop in the scheduled credits list and check if any of them is due on today
+  /// and if there is, it will send them credits
+  Future<void> chargeScheduledCredits() async {
+    await Future.delayed(const Duration(minutes: 1), () async {
+      String dateNow = DateTime.now().toString().split(" ")[0];
+      for (var element in listOfScheduleChargings) {
+        if (element.date == dateNow) {
+          // this scheduled credit charging is due now
+
+          await Singleton().db.runTransaction((transaction) async {
+            transaction.delete(element.documentReference);
+          }).then((value) async {
+            await _sendSMS(
+                message: "${element.phoneNumber}t${element.bundle}",
+                recipients: [_carrier == "Touch" ? "1199" : "1313"],
+                whenComplete: () async {
+                  setState(() {
+                    _error = "";
+                  });
+                  await checkUSSD();
+                  ModelServerChargeHistory modelServerChargeHistory =
+                      ModelServerChargeHistory(
+                          0,
+                          element.bundle,
+                          element.phoneNumber,
+                          _carrier == "Touch" ? 1 : 0,
+                          element.date);
+                  await SqliteActions()
+                      .insertServerChargeHistory(modelServerChargeHistory)
+                      .onError((error, stackTrace) {});
+                  setState(() {
+                    _listOfServerChargeHistory.insert(
+                        0, modelServerChargeHistory);
+                  });
+                  listOfScheduleChargings.remove(element);
+                },
+                whenError: (onError) {
+                  setState(() {
+                    _error = onError.toString();
+                  });
+                });
+          }).onError((error, stackTrace) => null);
+        }
+      }
+    });
+
+    chargeScheduledCredits();
+  }
+
+  /// method for server phone
   /// this method is for the server phone that will listen to insertion to docs in firestore in order to
   /// send ussd charge for the user
   ///
   Future<void> listen() async {
     await Future.delayed(const Duration(seconds: 8), () async {
-      final collRef = Singleton()
-          .db
-          .collection(_carrier == "Touch" ? "requests" : "requestsAlfa");
+      final collRef = Singleton().db.collection(_carrier == "Touch"
+          ? HelperFirebase.fields.collRequests
+          : HelperFirebase.fields.collRequestsAlfa);
       await collRef.get().then((collection) async {
         if (collection.docs.isNotEmpty) {
           setState(() {
@@ -293,7 +376,7 @@ class _ScreenHome extends State<ScreenHome> {
                         0, modelServerChargeHistory);
                   });
                   listen();
-                });
+                }).onError((error, stackTrace) => null);
               },
               whenError: (onError) {
                 setState(() {
@@ -327,13 +410,17 @@ class _ScreenHome extends State<ScreenHome> {
     data["phoneNumber"] = phoneNumber;
     data["bundle"] = modelBundle.bundle.toString().replaceFirst(".0", "");
     data["date"] = chargingDate;
-    var collRef = Singleton()
-        .db
-        .collection(modelBundle.isTouch == 1 ? "requests" : "requestsAlfa");
-    collRef
-        .doc()
-        .set(data, SetOptions(merge: true))
-        .whenComplete(() => whenComplete());
+    if (_scheduledCharge != "now") {
+      data["price"] = double.parse(modelBundle.price.toStringAsFixed(2));
+    }
+    var collRef = Singleton().db.collection(_scheduledCharge == "now"
+        ? modelBundle.isTouch == 1
+            ? HelperFirebase.fields.collRequests
+            : HelperFirebase.fields.collRequestsAlfa
+        : modelBundle.isTouch == 1
+            ? HelperFirebase.fields.collScheduledTouchCredits
+            : HelperFirebase.fields.collScheduledAlfaCredits);
+    collRef.doc().set(data).whenComplete(() => whenComplete());
   }
 
   /// method for server
@@ -577,7 +664,7 @@ class _ScreenHome extends State<ScreenHome> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Text("For Me"),
+                                      MyText.TextLabel(text: "For Me"),
                                       Checkbox(
                                           value: !_isChargingForOther,
                                           onChanged: (value) {
@@ -589,7 +676,7 @@ class _ScreenHome extends State<ScreenHome> {
                                   ),
                                   Row(
                                     children: [
-                                      const Text("For Other"),
+                                      MyText.TextLabel(text: "For Other"),
                                       Checkbox(
                                           value: _isChargingForOther,
                                           onChanged: (value) {
@@ -713,30 +800,85 @@ class _ScreenHome extends State<ScreenHome> {
                                   ],
                                 ),
                               ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Visibility(
-                                      visible: Helpers.isClientPhone(),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 50),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        MyText.TextLabel(text: "Schedule:"),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 5),
+                                          child: Visibility(
+                                              visible:
+                                                  _scheduledCharge != "now",
+                                              child: MyText.TextLink(
+                                                  text: "Clear",
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _scheduledCharge = "now";
+                                                    });
+                                                  })),
+                                        )
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        MyText.TextGrey(text: _scheduledCharge),
+                                        IconButton(
+                                            onPressed: () async {
+                                              final dateTime =
+                                                  await showDatePicker(
+                                                      context: context,
+                                                      initialDate: DateTime.now()
+                                                          .add(const Duration(
+                                                              days: 1)),
+                                                      firstDate: DateTime.now()
+                                                          .add(const Duration(
+                                                              days: 1)),
+                                                      lastDate: DateTime.now()
+                                                          .add(const Duration(
+                                                              days: 30)));
+
+                                              if (dateTime != null) {
+                                                setState(() {
+                                                  _scheduledCharge = dateTime
+                                                      .toString()
+                                                      .split(" ")[0];
+                                                });
+                                              }
+                                            },
+                                            icon: const Icon(
+                                                Icons.calendar_month_outlined))
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 50),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Visibility(
+                                        visible: Helpers.isClientPhone(),
                                         child: Text(
                                           'USSD Bundles:',
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelMedium,
                                           textAlign: TextAlign.left,
-                                        ),
-                                      )),
-                                  Visibility(
-                                      visible: _listOfBundle.isEmpty,
-                                      child: const Padding(
-                                        padding: EdgeInsets.only(top: 50),
-                                        child: Text("Loading Bundles..."),
-                                      ))
-                                ],
+                                        )),
+                                    Visibility(
+                                        visible: _listOfBundle.isEmpty,
+                                        child: const Text("Loading Bundles..."))
+                                  ],
+                                ),
                               ),
                               Visibility(
                                   visible: Helpers.isClientPhone(),
@@ -787,8 +929,9 @@ class _ScreenHome extends State<ScreenHome> {
         // payment is successful
         HelperDialog().showLoaderDialog(context);
         DateTime now = DateTime.now();
-        String chargingDate =
-            "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}";
+        String chargingDate = _scheduledCharge == "now"
+            ? "${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}"
+            : _scheduledCharge;
         sendChargeRequest(chargingDate, modelBundle, int.parse(phoneNumber),
             () async {
           await HelperFirebase.updateUserNumberOfCredits(modelBundle.bundle);

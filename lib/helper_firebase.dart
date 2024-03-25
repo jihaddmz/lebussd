@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lebussd/HelperSharedPref.dart';
+import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/singleton.dart';
 
 class HelperFirebase {
+  static final fields = _Fields._();
+
   static Future<void> createUserEntry(
       String phoneNumber, String username, String carrier,
       {String numberOfCredits = "0"}) async {
@@ -140,4 +143,14 @@ class HelperFirebase {
         .doc(HelperSharedPreferences.getString("phone_number"))
         .set(map, SetOptions(merge: true));
   }
+}
+
+// fields for firebase firestore
+class _Fields {
+  _Fields._();
+
+  final String collScheduledAlfaCredits = "scheduledAlfaCredits";
+  final String collScheduledTouchCredits = "scheduledTouchCredits";
+  final String collRequests = "requests";
+  final String collRequestsAlfa = "requestsAlfa";
 }
