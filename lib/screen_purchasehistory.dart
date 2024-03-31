@@ -51,11 +51,9 @@ class _ScreenPurchaseHistory extends State<ScreenPurchaseHistory> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 70),
         child: _list.isEmpty
-            ? Center(
-                child: Lottie.asset('assets/loading.json', animate: true)
-              )
+            ? Center(child: Lottie.asset('assets/loading.json', animate: true))
             : ListView.builder(
                 itemCount: _list.length,
                 itemBuilder: (context, index) {

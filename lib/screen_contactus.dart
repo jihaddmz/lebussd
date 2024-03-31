@@ -47,7 +47,7 @@ class _ScreenContactUs extends State<ScreenContactUs> {
         floatingActionButton: Visibility(
           visible: MediaQuery.of(context).viewInsets.bottom == 0.0,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.only(bottom: 70),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -83,92 +83,93 @@ class _ScreenContactUs extends State<ScreenContactUs> {
           ),
         ),
         body: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: OptionsSelector(
-                    list: [bug, bundle, other],
-                    onTap: (value) {
-                      setState(() {
-                        _controllerMessage.clear();
-                        _selectedOption = value;
-                      });
-                    },
-                  ),
+          scrollDirection: Axis.vertical,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: OptionsSelector(
+                  list: [bug, bundle, other],
+                  onTap: (value) {
+                    setState(() {
+                      _controllerMessage.clear();
+                      _selectedOption = value;
+                    });
+                  },
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Text(explanationText,
-                              style: const TextStyle(color: Colors.grey))),
-                      Padding(
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(explanationText,
+                            style: const TextStyle(color: Colors.grey))),
+                    Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: TextFormField(
+                          onChanged: (value) {
+                            if (_errorText != null) {
+                              setState(() {
+                                _errorText = null;
+                              });
+                            }
+                          },
+                          maxLines: 10,
+                          minLines: 3,
+                          enabled: true,
+                          controller: _controllerMessage,
+                          decoration: const InputDecoration(
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      width: 1,
+                                      color: Colors.grey,
+                                      style: BorderStyle.solid),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              labelText: "Your Message*",
+                              labelStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 13)),
+                        )),
+                    Visibility(
+                        visible: _selectedOption == bundle,
+                        child: Padding(
                           padding: const EdgeInsets.only(top: 20),
-                          child: TextFormField(
-                            onChanged: (value) {
-                              if (_errorText != null) {
-                                setState(() {
-                                  _errorText = null;
-                                });
-                              }
-                            },
-                            maxLines: 10,
-                            minLines: 3,
-                            enabled: true,
-                            controller: _controllerMessage,
-                            decoration: const InputDecoration(
-                                enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color: Colors.grey,
-                                        style: BorderStyle.solid),
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10))),
-                                labelText: "Your Message*",
-                                labelStyle: TextStyle(
-                                    color: Colors.grey, fontSize: 13)),
-                          )),
-                      Visibility(
-                          visible: _selectedOption == bundle,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 20),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () async {
-                                    if (await Helpers.requestPhotoPermission(
-                                        context)) {
-                                      _getFromGallery();
-                                    }
-                                  },
-                                  child: const Text("Attach:*",
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          decorationColor: Colors.black,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                Expanded(
-                                    child: SizedBox(
-                                  height: 60,
-                                  child: ListView(
-                                      shrinkWrap: true,
-                                      scrollDirection: Axis.horizontal,
-                                      children: attachments()),
-                                ))
-                              ],
-                            ),
-                          ))
-                    ],
-                  ),
-                )
-              ],
-            )));
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  if (await Helpers.requestPhotoPermission(
+                                      context)) {
+                                    _getFromGallery();
+                                  }
+                                },
+                                child: const Text("Attach:*",
+                                    style: TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Expanded(
+                                  child: SizedBox(
+                                height: 60,
+                                child: ListView(
+                                    shrinkWrap: true,
+                                    scrollDirection: Axis.horizontal,
+                                    children: attachments()),
+                              ))
+                            ],
+                          ),
+                        ))
+                  ],
+                ),
+              )
+            ],
+          ),
+        ));
   }
 
   bool validated() {

@@ -677,7 +677,7 @@ class _ScreenHome extends State<ScreenHome> {
         ),
         body: SingleChildScrollView(
           child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 70),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
