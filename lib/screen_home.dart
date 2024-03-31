@@ -12,6 +12,7 @@ import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
+import 'package:lebussd/components/buttons.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
 import 'package:lebussd/components/item_send_monthly_rewards.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
@@ -612,12 +613,42 @@ class _ScreenHome extends State<ScreenHome> {
                           ),
                           actionsAlignment: MainAxisAlignment.center,
                           actions: [
-                            ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text("OK",
-                                    style: TextStyle(fontSize: 15)))
+                            ButtonSmall(
+                                text: "Log Out",
+                                color: colorRed,
+                                onClick: () {
+                                  HelperDialog().showDialogAffirmation(
+                                      context,
+                                      "Attention!",
+                                      "Are you sure you want to sign out?",
+                                      () async {
+                                    Navigator.pop(context);
+                                    if (await Helpers.isConnected()) {
+                                      HelperDialog().showLoaderDialog(context);
+                                      await HelperFirebase.updateIsSignedOut();
+                                      HelperSharedPreferences.setString(
+                                              "phone_number", "")
+                                          .then((value) {
+                                        HelperSharedPreferences.setString(
+                                                "name", "")
+                                            .then((value) {
+                                          Navigator.pop(context);
+                                          Navigator.of(context)
+                                              .pushAndRemoveUntil(
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ScreenWelcome()),
+                                                  (route) => false);
+                                        });
+                                      });
+                                    } else {
+                                      HelperDialog()
+                                          .showDialogNotConnected(context);
+                                    }
+                                  }, () {
+                                    Navigator.pop(context);
+                                  });
+                                })
                           ],
                         );
                       });
@@ -646,33 +677,6 @@ class _ScreenHome extends State<ScreenHome> {
                   }
                 },
                 icon: const Icon(Icons.balance_outlined)),
-            IconButton(
-                onPressed: () {
-                  HelperDialog().showDialogAffirmation(context, "Attention!",
-                      "Are you sure you want to sign out?", () async {
-                    Navigator.pop(context);
-                    if (await Helpers.isConnected()) {
-                      HelperDialog().showLoaderDialog(context);
-                      await HelperFirebase.updateIsSignedOut();
-                      HelperSharedPreferences.setString("phone_number", "")
-                          .then((value) {
-                        HelperSharedPreferences.setString("name", "")
-                            .then((value) {
-                          Navigator.pop(context);
-                          Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) => ScreenWelcome()),
-                              (route) => false);
-                        });
-                      });
-                    } else {
-                      HelperDialog().showDialogNotConnected(context);
-                    }
-                  }, () {
-                    Navigator.pop(context);
-                  });
-                },
-                icon: const Icon(Icons.logout)),
           ],
         ),
         body: SingleChildScrollView(

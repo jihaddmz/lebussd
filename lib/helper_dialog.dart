@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lebussd/colors.dart';
 import 'package:lottie/lottie.dart';
 
 class HelperDialog {
@@ -96,14 +97,16 @@ class HelperDialog {
             actions: [
               ElevatedButton(
                   onPressed: () {
-                    onYesClicked();
-                  },
-                  child: const Text('Yes', style: TextStyle(fontSize: 15))),
-              ElevatedButton(
-                  onPressed: () {
                     onNoClicked();
                   },
-                  child: const Text('No', style: TextStyle(fontSize: 15)))
+                  child: const Text('No',
+                      style: TextStyle(fontSize: 15, color: colorRed))),
+              ElevatedButton(
+                  onPressed: () {
+                    onYesClicked();
+                  },
+                  child: const Text('Yes',
+                      style: TextStyle(fontSize: 15, color: colorGreen))),
             ],
           );
         });
