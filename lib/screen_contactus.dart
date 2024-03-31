@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:keyboard_detection/keyboard_detection.dart';
 import 'package:lebussd/helpers.dart';
 
 import 'colors.dart';
@@ -43,45 +44,46 @@ class _ScreenContactUs extends State<ScreenContactUs> {
           title: Text("Contact Us",
               style: Theme.of(context).textTheme.displayLarge),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButtonLocation:
+            FloatingActionButtonLocation.centerFloat,
         floatingActionButton: Visibility(
-          visible: MediaQuery.of(context).viewInsets.bottom == 0.0,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 70),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    if (validated()) {
-                      sendEmail();
-                    } else {
-                      setState(() {
-                        _errorText = "Enter all required information *";
-                      });
-                    }
-                  },
-                  style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all<Color>(
-                        validated() ? Colors.white : Colors.black),
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                        validated() ? primaryColor : secondaryColor),
-                    shape: MaterialStateProperty.all<OutlinedBorder>(
-                        ContinuousRectangleBorder(
-                            borderRadius: BorderRadius.circular(20))),
-                    minimumSize: MaterialStateProperty.all<Size>(
-                        Size(MediaQuery.of(context).size.width - 50, 50)),
+            visible: View.of(context).viewInsets.bottom <= 0.0,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 70),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      if (validated()) {
+                        sendEmail();
+                      } else {
+                        setState(() {
+                          _errorText = "Enter all required information *";
+                        });
+                      }
+                    },
+                    style: ButtonStyle(
+                      foregroundColor: MaterialStateProperty.all<Color>(
+                          validated() ? Colors.white : Colors.black),
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          validated() ? primaryColor : secondaryColor),
+                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                          ContinuousRectangleBorder(
+                              borderRadius: BorderRadius.circular(20))),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                          Size(MediaQuery.of(context).size.width - 50, 50)),
+                    ),
+                    child: const Text("Submit",
+                        style: TextStyle(fontSize: 18)),
                   ),
-                  child: const Text("Submit", style: TextStyle(fontSize: 18)),
-                ),
-                Text(
-                  _errorText ?? "",
-                  style: TextStyle(color: Colors.red),
-                )
-              ],
-            ),
-          ),
-        ),
+                  Text(
+                    _errorText ?? "",
+                    style: TextStyle(color: Colors.red),
+                  )
+                ],
+              ),
+            )),
         body: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Column(
@@ -128,11 +130,11 @@ class _ScreenContactUs extends State<ScreenContactUs> {
                                       width: 1,
                                       color: Colors.grey,
                                       style: BorderStyle.solid),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(10))),
                               labelText: "Your Message*",
-                              labelStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 13)),
+                              labelStyle: TextStyle(
+                                  color: Colors.grey, fontSize: 13)),
                         )),
                     Visibility(
                         visible: _selectedOption == bundle,
@@ -149,7 +151,8 @@ class _ScreenContactUs extends State<ScreenContactUs> {
                                 },
                                 child: const Text("Attach:*",
                                     style: TextStyle(
-                                        decoration: TextDecoration.underline,
+                                        decoration:
+                                            TextDecoration.underline,
                                         decorationColor: Colors.black,
                                         fontWeight: FontWeight.bold)),
                               ),
