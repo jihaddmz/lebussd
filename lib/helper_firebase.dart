@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lebussd/HelperSharedPref.dart';
-import 'package:lebussd/models/model_bundle.dart';
 import 'package:lebussd/singleton.dart';
 
 class HelperFirebase {
@@ -143,6 +142,59 @@ class HelperFirebase {
         .doc(HelperSharedPreferences.getString("phone_number"))
         .set(map, SetOptions(merge: true));
   }
+
+// for server fetching the top 3 in the leaderboards
+  static Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>?>
+      fetchTop3InLeaderboard() async {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>>? list;
+    await Singleton()
+        .db
+        .collection(fields.collUsers)
+        .get()
+        .then((value) {
+      list = value.docs;
+      list!.sort((p, n) {
+        // sorting the docs according to the descending order of numberOfCredits
+        return double.parse(n[fields.fieldNumberOfCredits])
+            .compareTo(
+                double.parse(p[fields.fieldNumberOfCredits]));
+      });
+      // list!.removeRange(3, list!.length); // removing the unneccassary elements
+      // for (var element in list!) {
+      //   Helpers.logD("Number of credits is ${element["numberOfCredits"]}");
+      // }
+    }).onError((error, stackTrace) => null);
+
+    return list;
+  }
+
+// for server, reset the number of credits for the users that are rewarded and returns true if the process is successful
+  static Future<bool> resetNumberOfCredits(String phoneNumber) async {
+    bool result = false;
+    Singleton()
+        .db
+        .collection(fields.collUsers)
+        .doc(phoneNumber)
+        .set({fields.fieldNumberOfCredits: "0"},
+            SetOptions(merge: true)).then((value) {
+      result = true;
+    }).onError((error, stackTrace) {
+      result = false;
+    });
+
+    return result;
+  }
+
+// for server, updates the congrats value to true so the user will be congratulated in the app
+  static Future<void> makeCongratsTrue(String phoneNumber) async {
+    Map<String, dynamic> map = {};
+    map[fields.fieldCongrats] = true;
+    await Singleton()
+        .db
+        .collection(fields.collUsers)
+        .doc(phoneNumber)
+        .set(map, SetOptions(merge: true));
+  }
 }
 
 // fields for firebase firestore
@@ -151,6 +203,10 @@ class _Fields {
 
   final String collScheduledAlfaCredits = "scheduledAlfaCredits";
   final String collScheduledTouchCredits = "scheduledTouchCredits";
-  final String collRequests = "requests";
-  final String collRequestsAlfa = "requestsAlfa";
+  final String collRequests = "requestss";
+  final String collRequestsAlfa = "requestssAlfa";
+  final String collUsers = "users";
+
+  final String fieldNumberOfCredits = "numberOfCredits";
+  final String fieldCongrats = "congrats";
 }

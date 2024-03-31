@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_sms/flutter_sms.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/singleton.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -177,5 +178,22 @@ class Helpers {
     } on SocketException catch (_) {
       return false;
     }
+  }
+
+  /// method for server
+  /// charging the client by sending a message to the client phone number ex: 76815643t1
+  ///
+  static Future<void> sendSMSMsg(
+      {required String message,
+      required List<String> recipients,
+      bool sendDirect = true,
+      required Function whenComplete,
+      required Function(dynamic) whenError}) async {
+    await sendSMS(message: message, recipients: recipients, sendDirect: sendDirect)
+        .catchError((onError) {
+      whenError(onError);
+    }).then((value) {
+      whenComplete();
+    });
   }
 }

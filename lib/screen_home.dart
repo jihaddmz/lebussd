@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
@@ -6,12 +8,12 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_sms/flutter_sms.dart';
 import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lebussd/HelperSharedPref.dart';
 import 'package:lebussd/colors.dart';
 import 'package:lebussd/components/item_recharge_card.dart';
+import 'package:lebussd/components/item_send_monthly_rewards.dart';
 import 'package:lebussd/components/item_server_recharge_card.dart';
 import 'package:lebussd/components/text.dart';
 import 'package:lebussd/helper_dialog.dart';
@@ -42,6 +44,7 @@ class ScreenHome extends StatefulWidget {
 }
 
 class _ScreenHome extends State<ScreenHome> {
+  late BuildContext mContext;
   String _carrier = "Touch";
   String _error =
       ""; // error happened on the server phone during charging for the client
@@ -76,6 +79,7 @@ class _ScreenHome extends State<ScreenHome> {
       listenForScheduledCreditsCharging();
       chargeScheduledCredits();
       removeLast10ServerChargeHistory();
+      HelperFirebase.fetchTop3InLeaderboard();
       // waitToCheckBalance();
       widget.callbackForWaitToRestart();
     } else {
@@ -283,8 +287,7 @@ class _ScreenHome extends State<ScreenHome> {
               element.doc["date"]));
         }
       }
-    }).onError((e) {
-    });
+    }).onError((e) {});
   }
 
   /// method for server phone
@@ -300,7 +303,7 @@ class _ScreenHome extends State<ScreenHome> {
           await Singleton().db.runTransaction((transaction) async {
             transaction.delete(element.documentReference);
           }).then((value) async {
-            await _sendSMS(
+            await Helpers.sendSMSMsg(
                 message: "${element.phoneNumber}t${element.bundle}",
                 recipients: [_carrier == "Touch" ? "1199" : "1313"],
                 whenComplete: () async {
@@ -352,7 +355,7 @@ class _ScreenHome extends State<ScreenHome> {
             _error = "";
           });
 
-          await _sendSMS(
+          await Helpers.sendSMSMsg(
               message:
                   "${collection.docs[0].get("phoneNumber")}t${collection.docs[0].get("bundle")}",
               recipients: [_carrier == "Touch" ? "1199" : "1313"],
@@ -423,22 +426,6 @@ class _ScreenHome extends State<ScreenHome> {
     collRef.doc().set(data).whenComplete(() => whenComplete());
   }
 
-  /// method for server
-  /// charging the client by sending a message to the client phone number ex: 76815643t1
-  ///
-  Future<void> _sendSMS(
-      {required String message,
-      required List<String> recipients,
-      required Function whenComplete,
-      required Function(dynamic) whenError}) async {
-    await sendSMS(message: message, recipients: recipients, sendDirect: true)
-        .catchError((onError) {
-      whenError(onError);
-    }).then((value) {
-      whenComplete();
-    });
-  }
-
   List<Widget> itemsOfServerChargeHistory() {
     List<Widget> listOfServerChargeHistory = [];
     for (var item in _listOfServerChargeHistory) {
@@ -492,6 +479,7 @@ class _ScreenHome extends State<ScreenHome> {
 
   @override
   Widget build(BuildContext context) {
+    mContext = context;
     if (Helpers.isClientPhone()) {
       fetchBundlesFromRevenueCat();
     } else {
@@ -506,6 +494,92 @@ class _ScreenHome extends State<ScreenHome> {
           title: Text(Singleton().appName,
               style: Theme.of(context).textTheme.displayLarge),
           actions: [
+            Visibility(
+                visible: !Helpers.isClientPhone(),
+                child: IconButton(
+                    onPressed: () async {
+                      if (await Helpers.isConnected()) {
+                        HelperDialog().showLoaderDialog(mContext);
+                        final listOfTop3 =
+                            await HelperFirebase.fetchTop3InLeaderboard();
+
+                        Navigator.pop(mContext);
+
+                        List<Widget> listOfRewardItems = [];
+
+                        if (listOfTop3 != null) {
+                          for (int i = 0; i < listOfTop3.length; i++) {
+                            if (i <= 2) {
+                              final currentUser = listOfTop3[i];
+                              listOfRewardItems.add(Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: ItemSendMonthlyRewards(
+                                      currentUser["username"],
+                                      currentUser.id,
+                                      currentUser["carrier"],
+                                      currentUser["numberOfCredits"],
+                                      () {})));
+                            }
+                          }
+                          showDialog(
+                              barrierDismissible: false,
+                              context: mContext,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: MyText.TextHeadline(
+                                      text: "Sending Rewards!"),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: listOfRewardItems,
+                                  ),
+                                  actionsAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  actions: [
+                                    ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: MyText.TextButton(text: "Done")),
+                                    ElevatedButton(
+                                        onPressed: () async {
+                                          HelperDialog().showDialogAffirmation(
+                                              mContext,
+                                              "Attention!",
+                                              "Are you sure you want to reset number of credits",
+                                              () async {
+                                            Navigator.pop(mContext);
+                                            HelperDialog()
+                                                .showLoaderDialog(mContext);
+                                            for (var element in listOfTop3) {
+                                              await HelperFirebase
+                                                  .resetNumberOfCredits(
+                                                      element.id);
+                                            }
+
+                                            Navigator.pop(mContext);
+                                          }, () {
+                                            Navigator.pop(mContext);
+                                          });
+                                        },
+                                        child: MyText.TextButton(
+                                            text: "Reset Credits"))
+                                  ],
+                                );
+                              });
+                        } else {
+                          HelperDialog().showDialogInfo(
+                              "Warning",
+                              "There is an error while fetching the top 3 users",
+                              mContext,
+                              true, () {
+                            Navigator.pop(mContext);
+                          });
+                        }
+                      } else {
+                        HelperDialog().showDialogNotConnected(mContext);
+                      }
+                    },
+                    icon: const Icon(Icons.attach_money_outlined))),
             IconButton(
                 onPressed: () {
                   showDialog(

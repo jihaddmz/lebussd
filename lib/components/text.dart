@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:lebussd/colors.dart';
 
 class MyText {
+
+  static Widget TextButton({required String text}) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+    );
+  }
+
   static Widget TextNormal({required String text}) {
     return Text(
       text,
