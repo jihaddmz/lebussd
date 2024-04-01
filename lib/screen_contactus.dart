@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:keyboard_detection/keyboard_detection.dart';
 import 'package:lebussd/helpers.dart';
 
 import 'colors.dart';
